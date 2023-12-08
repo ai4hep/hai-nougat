@@ -2,7 +2,6 @@ import hai
 from pathlib import Path
 import hai_model
 
-hai.api_key = ""
 
 # 发起API请求，传递文件的字节数据
 ret = hai_model.HaiModel.inference(
@@ -11,6 +10,7 @@ ret = hai_model.HaiModel.inference(
     stream=True,
     url= "http://aiapi.ihep.ac.cn:42901",
     pdf_path = "../nougat.pdf",
+    api_key=""
 )
 
 save_path = Path('../test.md')
