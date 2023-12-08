@@ -1,0 +1,68 @@
+\documentclass{article}
+\begin{document}
+\section{Verbatim Environment}
+Normal {\bf Bold} stuff.
+
+Verbatim 1:
+\begin{verbatim}
+AbNormal {\bf NonBold} stuff.
+\end{verbatim}
+
+Verbatim 2:
+\begin{verbatim}
+inside verbatim
+\end {verbatim}
+still inside verbatim
+\end{verbatim}
+
+Verbatim 3:
+\begin{verbatim} keep this
+AbNormal {\bf NonBold} stuff.
+keep this too    \end{verbatim} outside verbatim
+More Normal {\bf Bold} stuff.
+
+% NOT allowed
+%\section{Inline \verb|\verb| verbatim.}
+\section{Inline verb command}
+
+Some inline \verb|\verb| verbatim.
+
+More \verb|a } b # c ^ d _ e $ f| stuff;
+
+And more \verb*|a } b # c ^ d _ e $ f| stuff
+
+Even in math $\verb|a_b|^2$.
+
+% This IS allowed!
+\hbox{More inline \verb|\verb| verbatim.}
+
+% and this:
+x\hbox to 2in  {\bf x\verb|\verb|y.}y
+
+% Also, make sure \verb is using the Gullet API to obtain any \expandafter tokens
+% AND it is using the correct delimiter activation sequence
+\def\nested{Nested | is allowed}
+\expandafter\verb\expandafter|\nested .|
+
+Note that spaces after a control-sequence are skipped on the \emph{next} read,
+by which time catcodes may have been changed.
+Prior to April, 2020, a space following \verb|\verb| would -- surprisingly -- have been treated as
+the delimiter! Since then, spaces are skipped and the following char is used as delimiter.
+We'll adopt the newer approach.
+
+\verb |a}b#c^d_e$f| stuff
+
+{\verb Trick-roll} T }
+
+{\verb* Trick-roll} T }
+
+% Another tricky case
+\makeatletter
+\def\verbatimlisting#1{%
+  \begingroup\@verbatim
+  \input#1
+  \endgroup}
+\makeatother
+Input snippet \verbatimlisting{snippet} after.
+
+\end{document}

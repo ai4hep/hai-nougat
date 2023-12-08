@@ -1,0 +1,88 @@
+# -*- mode: Perl -*-
+# /=====================================================================\ #
+# |  float                                                              | #
+# | Implementation for LaTeXML                                          | #
+# |=====================================================================| #
+# | Part of LaTeXML:                                                    | #
+# |  Public domain software, produced as part of work done by the       | #
+# |  United States Government & not subject to copyright in the US.     | #
+# |---------------------------------------------------------------------| #
+# | Thanks to the arXMLiv group for initial implementation              | #
+# |    http://arxmliv.kwarc.info/                                       | #
+# | Released to the Public Domain                                       | #
+# |---------------------------------------------------------------------| #
+# | Bruce Miller <bruce.miller@nist.gov>                        #_#     | #
+# | http://dlmf.nist.gov/LaTeXML/                              (o o)    | #
+# \=========================================================ooo==U==ooo=/ #
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Choose the current float style (plain, plaintop, boxed, ruled)
+DefMacro('\float@style',  'plain');
+DefMacro('\floatstyle{}', '\def\float@style{#1}');
+# \restylefloat{style}  Ignore for now...
+DefMacro('\restylefloat OptionalMatch:* {}', undef);
+# \floatplacement{style}{placement}  Ignorable
+DefMacro('\floatplacement{}{}', undef);
+
+# \listof{type}{title}   Ignorable
+DefMacro('\listof{}{}', undef);
+
+# \floatname{type}{name}
+#DefMacro('\floatname{}{}', '\@namedef{#1name}{#2}');
+DefMacro('\floatname{}{}', '\@namedef{lx@name@#1}{#2}');
+our %float_outerframe = (ruled => 'top');
+our %float_innerframe = (ruled => 'topbottom', boxed => 'rectangle');
+DefPrimitive('\newfloat{}{}{}[]', sub {
+    my ($gullet, $type, $placement, $auxext, $within) = @_;
+    $type   = ToString($type);
+    $within = ToString($within);
+    my $style = ToString(Digest(T_CS('\float@style')));
+    NewCounter($type, $within);
+    DefMacroI('\the' . $type, undef, '\the' . $within . '.\arabic{' . $type . '}') if $within;
+    if (!LookupDefinition(T_CS('\\lx@name@' . $type))) {
+      DefMacroI('\\lx@name@' . $type, undef, $type); }
+    my $isplain = $style =~ /^plain/;
+    DefMacroI('\fnum@font@' . $type, undef, ($isplain ? '\rmfamily' : '\bfseries'));
+    DefMacroI('\format@title@' . $type, '{}',
+      ($isplain
+        ? '\lx@tag[][: ]{\lx@fnum@@{' . $type . '}} #1'
+        : '\lx@tag[][ ]{\lx@fnum@@{' . $type . '}} #1'));
+    DefMacroI('\ext@' . $type, undef, $auxext);
+    DefEnvironmentI($type, "[]",
+      "<ltx:float xml:id='#id' ?#1(placement='#1') inlist='#inlist' class='ltx_float_$type'>"
+        . "#tags"
+        . "#body"
+        . "</ltx:float>",
+      properties     => { layout => 'vertical' },
+      beforeDigest   => sub { beforeFloat($type); },
+      afterDigest    => sub { afterFloat($_[1]); },
+      afterConstruct => sub { addFloatFrames($_[0], $style); });
+    DefEnvironmentI("$type*", "[]",
+      "<ltx:float xml:id='#id' ?#1(placement='#1') inlist='#inlist' class='ltx_float_$type'>"
+        . "#tags"
+        . "#body"
+        . "</ltx:float>",
+      properties     => { layout => 'vertical' },
+      beforeDigest   => sub { beforeFloat($type, double => 1); },
+      afterDigest    => sub { afterFloat($_[1]); },
+      afterConstruct => sub { addFloatFrames($_[0], $style); });
+});
+## ??? DefMacro('\plain','');
+
+sub addFloatFrames {
+  my ($document, $style) = @_;
+  my $float = $document->getNode->lastChild;
+  if (my $outer = $style && $float_outerframe{$style}) {
+    $document->setAttribute($float, framed => $outer); }
+  if (my $inner = $style && $float_innerframe{$style}) {
+    my ($body) = grep { $document->getNodeQName($_) !~ /^ltx:(?:toc)?caption$/ } $float->childNodes;
+    if ($body) {
+      $document->setAttribute($body, framed => $inner); } }
+  return; }
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+1;

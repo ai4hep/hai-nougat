@@ -1,0 +1,302 @@
+# -*- mode: Perl -*-
+# /=====================================================================\ #
+# |  graphics                                                           | #
+# | Implementation for LaTeXML                                          | #
+# |=====================================================================| #
+# | Part of LaTeXML:                                                    | #
+# |  Public domain software, produced as part of work done by the       | #
+# |  United States Government & not subject to copyright in the US.     | #
+# |---------------------------------------------------------------------| #
+# | Bruce Miller <bruce.miller@nist.gov>                        #_#     | #
+# | http://dlmf.nist.gov/LaTeXML/                              (o o)    | #
+# \=========================================================ooo==U==ooo=/ #
+#**********************************************************************
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+use LaTeXML::Util::Pathname;
+use LaTeXML::Util::Image;
+
+#======================================================================
+# (See  LaTeXML::Post::Graphics for suggested postprocessing)
+# Package options: draft, final, hiderotate, hidescale, hiresbb
+
+DefParameterType('GraphixDimension', sub {
+    my ($gullet) = @_;
+    $gullet->skipSpaces;
+    my $next = $gullet->readXToken;
+    # Wrong !?!?!
+    if (!$next || ($next->equals(T_OTHER('!')))) {
+      undef; }    # essentially: let other dimensions determine size.
+    else {
+      $gullet->unread($next);
+      $gullet->readDimension; } },
+  optional => 1);
+
+# Should probably be more clever about whether to create an ltx:inline-block vs just ltx:text
+# perhaps somethinb based on modes?
+# NOTE: Need to arrange for \width,\height,\depth,\totalheight to be bound!!!
+# Record the box in \@tempboxa ???
+sub graphics_scaledbox_props {
+  my ($box, $xscale, $yscale) = @_;
+  #  my ($w,   $h,      $d)      = $box->getSize;
+  my ($rw, $rh, $rd, $w, $h, $d) = $box->getSize;
+  my ($sw, $sh, $sd) =
+    ($w && $w->multiply($xscale), $h && $h->multiply($yscale), $d && $d->multiply($yscale));
+  return (
+    box         => $box,
+    xscale      => $xscale, yscale => $yscale,
+    innerwidth  => $w,
+    innerheight => $h,
+    innerdepth  => $d,
+    width       => $sw,
+    height      => $sh,
+    depth       => $sd,
+    totalheight => $h  && ($d ? $h->add($d) : $h)->multiply($yscale),
+    xtranslate  => $sw && $w && $sw->subtract($w)->multiply(+0.5),
+    ytranslate  => $sh && $h && $sh->subtract($h)->multiply(-0.5),
+  ); }
+
+sub graphics_scaledbox_insert {
+  my ($document, %props) = @_;
+  $document->openElement('ltx:inline-block',
+    xscale     => $props{xscale},     yscale     => $props{yscale},
+    width      => $props{width},      height     => $props{height}, depth => $props{depth},
+    xtranslate => $props{xtranslate}, ytranslate => $props{ytranslate});
+  $document->absorb($props{box});
+  $document->closeElement('ltx:inline-block');
+  return; }
+
+DefConstructor('\Gscale@box {Float} [Float] {}', sub {
+    my ($document, $scale, $yscale, $box, %props) = @_;
+    graphics_scaledbox_insert($document, %props); },
+  alias      => '\scalebox',
+  properties => sub {
+    my ($stomach, $xscale, $yscale, $box) = @_;
+    graphics_scaledbox_props($box, $xscale, $yscale || $xscale); },
+  mode => 'text');
+Let('\scalebox', '\Gscale@box');
+
+DefConstructor('\Gscale@box@dd {Dimension}{Dimension} {}', sub {
+    my ($document, $num, $denum, $box, %props) = @_;
+    graphics_scaledbox_insert($document, %props); },
+  properties => sub {
+    my ($stomach, $num, $denom, $box) = @_;
+    my $scale = $num->valueOf / $denom->valueOf;
+    graphics_scaledbox_props($box, $scale, $scale); },
+  mode => 'text');
+
+DefConstructor('\Gscale@box@dddd {Dimension}{Dimension}{Dimension}{Dimension} {}', sub {
+    my ($document, $xnum, $xdenom, $ynum, $ydenom, $box, %props) = @_;
+    graphics_scaledbox_insert($document, %props); },
+  properties => sub {
+    my ($stomach, $xn, $xd, $yn, $yd, $box) = @_;
+    graphics_scaledbox_props($box, $xn->valueOf / $xd->valueOf, $yn->valueOf / $yd->valueOf); },
+  mode => 'text');
+
+# 1st arg: \totalheight or \height
+DefConstructor('\Gscale@@box {} {GraphixDimension}{GraphixDimension} {}', sub {
+    my ($document, $heighttype, $width, $height, $box, %props) = @_;
+    graphics_scaledbox_insert($document, %props); },
+  reversion  => '\resizebox{#2}{#3}{#4}',
+  properties => sub {
+    my ($stomach, $heighttype, $width, $height, $box) = @_;
+    my ($xscale, $yscale)                             = (1, 1);
+    my ($w, $h, $d)                                   = $box->getSize;
+    $h = $h->advance($d) if T_CS('\totalheight')->equals($heighttype);
+    if ($width)             { $xscale = $width->valueOf / ($w->valueOf || 1); }
+    if ($height)            { $yscale = $height->valueOf / ($h->valueOf || 1); }
+    if ($width && !$height) { $yscale = $xscale; }
+    if ($height && !$width) { $xscale = $yscale; }
+    graphics_scaledbox_props($box, $xscale, $yscale); },
+  mode => 'text');
+DefMacro('\resizebox', '\leavevmode\@ifstar{\Gscale@@box\totalheight}{\Gscale@@box\height}');
+
+# TeX wants to rotate CCW, by default, about the left baseline,
+# but some macros allow you to specify the point or corner about which to rotate.
+# It then allocates the width of the resulting box.
+# CSS3's rotation wants to rotate CW about the CENTER of the box!
+# The resulting box should have it's origin at the leftmost corner
+# But we're shifting the box from the position CSS thought that it WAS (before rotation!)
+# However, I THINK that it is using the GIVEN width & height
+# to determine the center!
+# Presumably CSS has lost the sense of the box's baseline?
+# Note that our transformable-attributes apply: translate, scale, rotate, in that order.
+
+# NOTE: There's a bizarre interaction between these CSS transformations
+# and position:absolute that I haven't sorted out!
+sub rotatedProperties {
+  my ($box, $angle, %options) = @_;
+  $angle = $angle->valueOf if ref $angle;
+  my $cwangle = -$angle;
+  my ($width, $height, $depth) = $box->getSize;
+  return () unless $width;
+  my ($w, $h, $d) = map { $_->valueOf } $width, $height, $depth;
+  my $x0 = 0;
+  my $y0 = 0;
+  if ($options{x}) { $x0 = $options{x}; $x0 = $x0->valueOf if ref $x0; }
+  if ($options{y}) { $y0 = $options{y}; $y0 = $y0->valueOf if ref $y0; }
+
+  if (my $origin = ToString($options{origin})) {
+    if    ($origin =~ /l/) { $x0 = 0; }
+    elsif ($origin =~ /r/) { $x0 = $w; }
+    elsif ($origin =~ /c/) { $x0 = $w / 2; $y0 = ($h - $d) / 2; }
+    if    ($origin =~ /t/) { $y0 = $h; }
+    elsif ($origin =~ /b/) { $y0 = -$d; }
+    elsif ($origin =~ /B/) { $y0 = 0; } }
+  my $H        = $h + $d;
+  my $rad      = $angle * 3.1415926 / 180;      # close enough
+  my $s        = sin($rad);
+  my $c        = cos($rad);
+  my $wp       = abs($w * $c) + abs($H * $s);
+  my @cornerys = (
+    (-$d - $y0) * $c + (+0 - $x0) * $s + $y0,     # bottom left
+    (-$d - $y0) * $c + ($w - $x0) * $s + $y0,     # bottom right
+    (+$h - $y0) * $c + ($w - $x0) * $s + $y0,     # top right
+    (+$h - $y0) * $c + (+0 - $x0) * $s + $y0);    # top left
+  my $hp       = max(@cornerys);
+  my $dp       = -min(@cornerys);
+  my $xsh      = Dimension(($wp - $w) / 2)->ptValue . 'pt';
+  my $ysh      = Dimension(($s < 0 ? -1 : +1) * ($h - $hp + $dp) / 2 + $d)->ptValue . 'pt';
+  my $cwidthp  = Dimension($wp);
+  my $cheightp = Dimension($hp);
+  my $cdepthp  = Dimension($dp);
+  my $widthp   = ($options{smash} ? Dimension(0) : $cwidthp);
+  return (
+    angle       => $angle,
+    width       => $widthp,
+    height      => $cheightp,
+    depth       => $cdepthp,
+    cwidth      => $cwidthp,
+    cheight     => $cheightp,
+    cdepth      => $cdepthp,
+    innerwidth  => $width,
+    innerheight => $height,
+    innerdepth  => $depth,
+    xtranslate  => $xsh,
+    ytranslate  => $ysh,
+  ); }
+
+# NOTE: Need to implement the origin of rotation!
+# [code so far only reads them]
+DefKeyVal('Grot', 'origin', '');            # c,l,r,t,b,B
+DefKeyVal('Grot', 'x',      'Dimension');
+DefKeyVal('Grot', 'y',      'Dimension');
+DefKeyVal('Grot', 'units',  '');
+DefConstructor('\rotatebox OptionalKeyVals:Grot {Float} {}',
+  "<ltx:inline-block angle='#angle' width='#width' height='#height' depth='#depth'"
+    . " innerwidth='#innerwidth' innerheight='#innerheight' innerdepth='#innerdepth'"
+    . " xscale='#xscale' yscale='#yscale'"
+    . " xtranslate='#xtranslate' ytranslate='#ytranslate'>"
+    . "#3"
+    . "</ltx:inline-block>",
+  afterDigest => sub {
+    my ($stomach, $whatsit) = @_;
+    my ($kv, $angle, $box) = $whatsit->getArgs();
+    $whatsit->setProperties(rotatedProperties($box, $angle, ($kv ? $kv->getHash : ()))); });
+# Backwards!
+DefMacro('\Grot@erotate', '\rotatebox[]');
+
+DefConstructor('\reflectbox {}',
+  "<ltx:inline-block angle='#angle' width='#width' height='#height' depth='#depth'"
+    . " innerwidth='#innerwidth' innerheight='#innerheight' innerdepth='#innerdepth'"
+    . " xscale='#xscale' yscale='#yscale'"
+    . " xtranslate='#xtranslate' ytranslate='#ytranslate'>"
+    . "#1"
+    . "</ltx:inline-block>",
+  properties => sub {
+    my ($stomach, $box) = @_;
+    my ($w, $h, $d) = $box->getSize;
+    return () unless $w;
+    (width => $w,
+      height => $h,
+      depth  => $d,
+      xscale => -1,
+      yscale => 1); },
+  mode => 'text');
+
+DefConstructor('\graphicspath DirectoryList', sub {
+    my ($document, $paths, %props) = @_;
+    foreach my $path (@{ $props{paths} }) {
+      $document->insertPI('latexml', graphicspath => $path); } },
+  properties => sub {
+    my ($stomach, $paths) = @_;
+    my @paths = ();
+    my $root  = $STATE->lookupValue('SOURCEDIRECTORY') || '';
+    foreach my $dir ($paths->getValues) {
+      my $path = pathname_absolute(pathname_canonical(ToString($dir)), $root);
+      push(@paths, $path);
+      PushValue(GRAPHICSPATHS => $path); }
+    return (paths => [@paths]); });
+
+# Basically, we're transforming the graphics options into graphicx format.
+DefMacro('\includegraphics OptionalMatch:* [][] Semiverbatim',
+  '\@includegraphics#1[#2][#3]{#4}');
+
+sub graphicS_options {
+  my ($starred, $option1, $option2) = @_;
+  my $bb = ($option2
+    ? ToString($option1) . " " . ToString($option2)
+    : ($option1 ? "0 0 " . ToString($option1) : ''));
+  $bb =~ s/,/ /g;
+  my $options = ($starred ? ($bb ? "viewport=$bb, clip" : "clip") : '');
+  return $options; }
+
+sub graphicX_options {
+  my ($starred, $kv) = @_;
+  my $options = ToString($kv);
+  $options .= ',clip=true' if $starred;
+  my $keepaspect;
+  $options .= ',';
+  $keepaspect = 1 if $options =~ s/width=,//;
+  $keepaspect = 1 if $options =~ s/height=,//;
+  if ($keepaspect) { $options .= 'keepaspectratio=true'; }
+  else             { $options =~ s/,$//; }
+  return $options; }
+
+DefConstructor('\@includegraphics OptionalMatch:* [][] Semiverbatim',
+  "<ltx:graphics graphic='#graphic' candidates='#candidates' options='#options'/>",
+  sizer      => \&image_graphicx_sizer,
+  properties => sub {
+    my ($stomach, $starred, $op1, $op2, $graphic) = @_;
+    my $options = graphicS_options($starred, $op1, $op2);
+    my ($path, @candidates) = image_candidates(ToString($graphic));
+    (graphic => $path,
+      candidates => join(',', @candidates),
+      options    => $options); },
+  alias => '\includegraphics');
+
+# Also unimplemented... probably nothing useful to pass thru anyway?
+DefConstructor('\DeclareGraphicsExtensions{}',          '');
+DefConstructor('\DeclareGraphicsRule{}{}{} Undigested', '');
+# Nothing done about the keyval package...
+
+# Random other defns
+RawTeX(<<'EoTeX');
+\let\Gin@decode\@empty
+\def\Gin@exclamation{!}
+\let\Gin@page\@empty
+\def\Gin@pagebox{cropbox}
+\newif\ifGin@interpolate
+\let\Gin@log\wlog
+\let\Gin@req@sizes\relax
+\def\Gin@scalex{1}%
+\let\Gin@scaley\Gin@exclamation
+\let\Gin@req@height\Gin@nat@height
+\let\Gin@req@width\Gin@nat@width
+\let\Gin@viewport@code\relax
+EoTeX
+
+DefConditional('\ifGin@clip');
+DefMacro('\Gin@i [][]{}', '');    # ?
+# \Gscale@div{\cs}{\dima}{\dimb}  :  \cs = \dima / \dimb
+DefPrimitive('\Gscale@div DefToken Dimension Dimension', sub {
+    my ($stomach, $cs, $num, $denom) = @_;
+    my $n = $num->valueOf;
+    my $d = $denom->valueOf;
+    DefMacro($cs, Tokens(Explode(($n == 0 ? 1 : $n / $d))));
+    return; });
+
+#======================================================================
+1;

@@ -1,0 +1,191 @@
+# -*- mode: Perl -*-
+# /=====================================================================\ #
+# |  amsthm                                                             | #
+# | Implementation for LaTeXML                                          | #
+# |=====================================================================| #
+# | Part of LaTeXML:                                                    | #
+# |  Public domain software, produced as part of work done by the       | #
+# |  United States Government & not subject to copyright in the US.     | #
+# |---------------------------------------------------------------------| #
+# | Thanks to the arXMLiv group for initial implementation              | #
+# |    http://arxmliv.kwarc.info/                                       | #
+# | Released to the Public Domain                                       | #
+# |---------------------------------------------------------------------| #
+# | Bruce Miller <bruce.miller@nist.gov>                        #_#     | #
+# | http://dlmf.nist.gov/LaTeXML/                              (o o)    | #
+# \=========================================================ooo==U==ooo=/ #
+
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Let('\@xp', '\expandafter');
+Let('\@nx', '\noexpand');
+
+# Core is defined in LaTeX.ltxml
+
+Let('\nonslanted', '\upshape');
+DefMacroI('\nopunct', undef, Tokens());
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Theorem Styles.
+
+# Redefine from LaTeX; notes go in normal font, not headfont
+DefRegister('\thm@notefont' => Tokens(T_CS('\fontseries'), T_CS('\mddefault'), T_CS('\upshape')));
+
+# amsthm also saves headfont!
+setSavableTheoremParameters(qw(
+    \thm@headfont \thm@bodyfont \thm@headpunct
+    \thm@styling \thm@headstyling \thm@headformatter thm@swap));
+
+# extra stubs (for now?) for internals that show up in arXiv:
+DefRegisterI('\thm@preskip',  undef, Glue(0));
+DefRegisterI('\thm@postskip', undef, Glue(0));
+DefMacro('\thm@space@setup', '\thm@preskip=\topsep \thm@postskip=\thm@preskip');
+
+# activate a certain theorem style
+DefPrimitive('\theoremstyle{}', sub {
+    my $style    = ToString($_[1]);
+    my $style_cs = T_CS('\th@' . $style);
+    if (!IsDefined($style_cs)) {
+      Warn("undefined", "theoremstyle", $_[0], "Unknown theorem style '$style', reverting to 'plain'.");
+      $style    = 'plain';
+      $style_cs = T_CS('\th@plain'); }
+    AssignValue('\thm@style' => $style);
+    Digest($style_cs);
+    return; });
+
+DefMacro('\swapnumbers', sub {
+    AssignValue('thm@swap' => !LookupValue('thm@swap')); });    # toggle!
+
+#\newtheoremstyle{note}% name
+#  {3pt}%      Space above
+#  {3pt}%      Space below
+#  {}%         Body font
+#  {}%         Indent amount (empty = no indent, \parindent = para indent)
+#  {\itshape}% Thm head font
+#  {:}%        Punctuation after thm head
+#  {.5em}%     Space after thm head: " " = normal interword space;
+#        %       \newline = linebreak
+#  {}%         Thm head spec (can be left empty, meaning `normal')
+
+DefPrimitive('\newtheoremstyle{}{}{}{}{}{}{}{}{}', sub {
+    my ($stomach, $name, $spaceabove, $spacebelow, $bodyfont,
+      $indent, $headfont, $headpunct, $spaceafter, $headspec) = @_;
+    my $headformatter;
+    if ($headspec->unlist) {    # If spec given, create formatter macro
+      $headformatter = T_CS('\format@title@theoremstyle@' . ToString($name));
+      DefMacroI($headformatter, convertLaTeXArgs(3, 0), $headspec); }
+
+    $name = ToString($name);
+    saveTheoremStyle($name,
+      '\thm@bodyfont'      => $bodyfont,
+      '\thm@headfont'      => $headfont,
+      '\thm@headpunct'     => $headpunct,
+      '\thm@headformatter' => $headformatter,
+      '\thm@headstyling'   => (Equals($spaceafter, Tokens(T_CS('\newline')))
+        ? Tokens() : T_CS('\lx@makerunin')));
+    DefMacroI(T_CS('\th@' . $name), undef, sub { useTheoremStyle($name); });
+    return; });
+
+# The default theorem styles.
+# plain is defined in LaTeX, but we need to add headpunct (.)
+RawTeX(<<'EoTeX');
+\newtheoremstyle{plain}{}{}{\itshape}{}{\bfseries}{.}{}{}
+\newtheoremstyle{definition}{}{}{\normalfont}{}{\bfseries}{.}{}{}
+\newtheoremstyle{remark}{}{}{\normalfont}{}{\itshape}{.}{}{}
+\theoremstyle{plain} % Activate the default style.
+EoTeX
+
+DefMacro('\thmname{}',   '#1');
+DefMacro('\thmnumber{}', '#1');
+DefMacro('\thmnote{}',   '#1');
+
+DefMacro('\thmhead{}{}{}',     Tokens());
+DefMacro('\swappedhead{}{}{}', Tokens());
+
+DefMacroI('\thmheadnl', undef, Tokens());
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Proofs
+
+AssignValue('QED@stack', []);
+DefMacro('\pushQED{}', sub { PushValue('QED@stack', $_[1]); });
+DefMacro('\popQED',    sub { (PopValue('QED@stack') || ()); });
+
+# Should mark this as somehow ignorable for math,
+# but we DO want to keep it in the formula...
+DefMacro('\qed', '\ltx@qed');
+DefConstructor('\ltx@qed',
+  "?#isMath(<ltx:XMTok role='PUNCT'>\x{220E}</ltx:XMTok>)(\x{220E})",
+  reversion => '\qed');
+Let('\mathqed',    '\qed');
+Let('\textsquare', '\qed');
+Let('\qedsymbol',  '\qed');
+Let('\openbox',    '\qed');
+
+DefMacro('\qedhere', sub {
+    my $t = PopValue('QED@stack');
+    PushValue('QED@stack', Tokens());
+    $t || (); });
+
+DefMacro('\proofname', 'Proof');
+DefPrimitive('\th@proof', sub {
+    AssignValue('\thm@headfont' => T_CS('\itshape'));
+    AssignValue('\thm@bodyfont' => T_CS('\normalfont'));
+    return; });
+
+# Note that you get EITHER \proofname OR [#1] but NOT both!!!
+DefConstructor('\@proof OptionalUndigested',
+  "<ltx:proof class='#class'>"
+    . "<ltx:title font='#titlefont' _force_font='true' class='#titleclass'>#title</ltx:title>"
+    . "#body",
+  beforeDigest => sub {
+    Digest(T_CS('\th@proof')); },
+  afterDigest => sub {
+    my ($stomach, $whatsit) = @_;
+    PushValue('QED@stack', T_CS('\qed'));
+    Digest(Tokens(T_CS('\the'), T_CS('\thm@bodyfont'))); },
+  properties => sub {
+    my $title = Digest(Tokens(T_BEGIN, T_CS('\the'), T_CS('\thm@headfont'),
+        ($_[1] ? $_[1]->unlist : (T_CS('\proofname'))),
+        T_OTHER('.'), T_END));
+    my $titlefont = [$title->unlist]->[1]->getFont;
+    (title => $title,
+      titlefont  => $titlefont,
+      class      => undef,
+      titleclass => 'ltx_runin'); });
+
+DefConstructor('\end@proof', sub {
+    $_[0]->maybeCloseElement('ltx:proof'); },
+  beforeDigest => sub {
+    my $qed = PopValue('QED@stack');
+    ($qed ? Digest($qed) : ()); });
+
+if (LookupValue('2.09_COMPATIBILITY')) {
+  #  \def\tiny{\Tiny}
+  #  \def\defaultfont{\normalfont}
+  #  \def\rom{\textup}
+
+  # Strangely, we need to undefine these... ?
+  # [well, don't even let them to \relax, then!]
+##  Let('\proof','\relax');
+##  Let('\endproof','\relax');
+  # {pf} & {pf&} env's are already defined in ams_support
+}
+else {
+  Let('\proof',        '\@proof');
+  Let('\endproof',     '\end@proof');
+  Let('\begin{proof}', '\begin{@proof}');
+  Let('\end{proof}',   '\end{@proof}'); }
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# from older versions of amsthm.sty
+DefPrimitive('\theorembodyfont{}',   sub { AssignValue('\thm@bodyfont' => $_[1]); });
+DefPrimitive('\theoremheaderfont{}', sub { AssignValue('\thm@headfont' => $_[1]); });
+DefRegister('\theorempreskipamount'  => Glue(0));
+DefRegister('\theorempostskipamount' => Glue(0));
+
+1;

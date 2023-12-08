@@ -1,0 +1,174 @@
+# -*- mode: Perl -*-
+# /=====================================================================\ #
+# |  elsart_support                                                     | #
+# | Implementation for LaTeXML                                          | #
+# |=====================================================================| #
+# | Part of LaTeXML:                                                    | #
+# |  Public domain software, produced as part of work done by the       | #
+# |  United States Government & not subject to copyright in the US.     | #
+# |---------------------------------------------------------------------| #
+# | Thanks to the arXMLiv group for initial implementation              | #
+# |    http://arxmliv.kwarc.info/                                       | #
+# | Released to the Public Domain                                       | #
+# | enhancements by Lee Worden                                          | #
+# |---------------------------------------------------------------------| #
+# | Bruce Miller <bruce.miller@nist.gov>                        #_#     | #
+# | http://dlmf.nist.gov/LaTeXML/                              (o o)    | #
+# \=========================================================ooo==U==ooo=/ #
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+if (LookupValue('@amsthm')) {
+  RequirePackage('amsthm'); }
+else {
+  DefMacro('\theoremstyle{}', '');
+  DefMacro('\qed',            '\ltx@qed');
+  DefConstructor('\ltx@qed',
+    "?#isMath(<ltx:XMTok role='PUNCT'>\x{220E}</ltx:XMTok>)(\x{220E})",
+    reversion => '\qed'); }
+
+RequirePackage('elsart_support_core');
+
+#======================================================================
+# Math
+DefMath('\Cset', "\x{2102}", role => 'ID', meaning => 'complexes');        # DOUBLE-STRUCK CAPITAL C
+DefMath('\Hset', "\x{210D}", role => 'ID', meaning => 'upper-complexes');  # DOUBLE-STRUCK CAPITAL H
+DefMath('\Nset', "\x{2115}", role => 'ID', meaning => 'numbers');          # DOUBLE-STRUCK CAPITAL N
+DefMath('\Qset', "\x{211A}", role => 'ID', meaning => 'rationals');        # DOUBLE-STRUCK CAPITAL Q
+DefMath('\Rset', "\x{211D}", role => 'ID', meaning => 'reals');            # DOUBLE-STRUCK CAPITAL R
+DefMath('\Zset', "\x{2124}", role => 'ID', meaning => 'integers');         # DOUBLE-STRUCK CAPITAL Z
+
+DefMacro('\half',      '{\textstyle\frac{1}{2}}');
+DefMacro('\threehalf', '{\textstyle\frac{3}{2}}');
+DefMacro('\quart',     '{\textstyle\frac{1}{4}}');
+
+DefMath('\d', "\x{2146}", role => 'DIFFOP', meaning => 'differential-d');
+DefMath('\e', "\x{2147}", role => 'ID',     meaning => 'exponential-e');
+
+DefConstructor('\operatorname OptionalMatch:* {}',
+  "<ltx:XMWrap role='OPERATOR' scriptpos='?#1(mid)(post)'>#2</ltx:XMWrap>",
+  bounded => 1, requireMath => 1, font => { family => 'serif' });
+
+DefMacro('\astsymbol{}', sub { (T_OTHER("\x{2217}" x ToString($_[1]))); });
+DefMacro('\fnstar{}',    sub { (T_OTHER("\x{22C6}" x ToString($_[1]))); });
+
+DefMath('\pol Digested', "\x{2192}", operator_role => 'OVERACCENT');    # RIGHTWARDS ARROW
+
+# Nuclear isotopes; More semantics would be nice here!
+DefMacro('\itnuc{}{}', '\ensuremath{\@@nuc{\textit{#1}}{#2}}');
+DefMacro('\nuc{}{}',   '\ensuremath{\@@nuc{#1}{#2}}');
+DefConstructor('\@@nuc{}{}',
+"<ltx:XMArg><ltx:XMApp><ltx:XMTok role='SUPERSCRIPTOP' scriptpos='#pos'/>#1#2</ltx:XMApp></ltx:XMArg>",
+  properties => sub { (pos => 'pre' . $_[0]->getScriptLevel); });
+
+#======================================================================
+# Tables, Figures & Theorems
+RawTeX(<<'EoTeX');
+\theoremstyle{plain}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{claim}[thm]{Claim}
+\newtheorem{axiom}[thm]{Axiom}
+\newtheorem{conj}[thm]{Conjecture}
+\newtheorem{fact}[thm]{Fact}
+\newtheorem{hypo}[thm]{Hypothesis}
+\newtheorem{assum}[thm]{Assumption}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{crit}[thm]{Criterion}
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{exmp}[thm]{Example}
+\newtheorem{rem}[thm]{Remark}
+\newtheorem{prob}[thm]{Problem}
+\newtheorem{prin}[thm]{Principle}
+\newtheorem{alg}{Algorithm}
+\newtheorem{note}{Note}
+\newtheorem{summ}{Summary}
+\newtheorem{case}{Case}
+EoTeX
+NewCounter('algorithm');
+DefMacro('\thealgorithm',  '\arabic{algorithm}');
+DefMacro('\algorithmname', 'Algorithm');
+
+DefEnvironment('{algorithm}',
+  "<ltx:theorem xml:id='#id' class='ltx_theorem_algorithm'>"
+    . "#tags"
+    . "#body",
+  afterConstruct => sub { $_[0]->maybeCloseElement('ltx:theorem'); },
+  beforeDigest   => sub { beforeFloat('algorithm'); },
+  afterDigest    => sub { afterFloat($_[1]); });
+
+RawTeX('\newenvironment{pf}{\begin{@proof}[\proofname]}{\end{@proof}}');
+
+# These make captions for continuations of figures & tables....
+# this isn't really quite right, but...
+DefMacro('\contcaption',       '\caption{continued}');
+DefMacro('\contfigurecaption', '\caption{continued}');
+DefMacro('\conttablecaption',  '\caption{continued}');
+
+#======================================================================
+# Bibliography.
+# recommends natbib, harvard style.
+
+# What is this???
+DefEnvironment('{subbibitems}', '#body');
+
+DefMacro('\cv', Tokens());
+DefEnvironment('{cv*}', "<ltx:section class='ltx_cv'><ltx:title>Curriculum Vitae</ltx:title>#body</ltx:section>");
+
+#======================================================================
+# shorthands.
+DefMacro('\AND',         '\&');
+DefMacro('\etal',        'et al.');
+DefMacro('\Elproofname', "Proof.");
+DefMacro('\proofname',   "Proof.");
+
+#======================================================================
+# Random spaces, dimensions
+
+DefMacro('\cropwidth',  '297mm');
+DefMacro('\cropheight', '210mm');
+DefMacro('\cropleft',   '0mm');
+DefMacro('\croptop',    '0mm');
+
+DefRegister('\rulepreskip' => Dimension('4pt'));
+
+DefMacro('\setleftmargin{}{}', Tokens());
+
+#======================================================================
+# random stuff
+Let('\realpageref', '\pageref');
+DefMacro('\snm', Tokens());
+
+DefMacro('\xalph{}', sub {
+    my $n = CounterValue($_[1])->valueOf;
+    ($n < 0 ? (Token(T_OTHER('*'))) : Invocation(T_CS('\alph'), $_[1])); });
+
+DefMacro('\xarabic{}', sub {
+    my $n = CounterValue($_[1])->valueOf;
+    ($n < 0 ? (Token(T_OTHER('*'))) : Invocation(T_CS('\xarabic'), $_[1])); });
+
+DefMacro('\xfnsymbol{}', sub {
+    my $n = CounterValue($_[1])->valueOf;
+    ($n < 0 ? (Token(T_OTHER('*'))) : Invocation(T_CS('\fnsymbol'), $_[1])); });
+
+DefEnvironment('{NoHyper}', '#body');
+
+DefMacro('\mpfootnotemark', Tokens());
+
+DefMacro('\FMSlash', '\protect\pFMSlash');
+DefMacro('\FMslash', '\protect\pFMslash');
+# puts a Large or small slash / through the contents.
+# This should overstrike... Unicode combining char? Or....
+DefMacro('\pFMSlash{}', '#1\Slashbox');
+DefMacro('\pFMslash{}', '#1\slashbox');
+
+DefMacro('\Slashbox', '/');
+DefMacro('\slashbox', '/');
+
+DefMacro('\note{}',  "<ltx:note>#1</ltx:note>");    # ?
+DefMacro('\query{}', Tokens());
+
+1;

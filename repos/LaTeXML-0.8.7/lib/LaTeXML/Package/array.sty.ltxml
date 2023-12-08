@@ -1,0 +1,74 @@
+# -*- mode: Perl -*-
+# /=====================================================================\ #
+# |  array                                                              | #
+# | Implementation for LaTeXML                                          | #
+# |=====================================================================| #
+# | Part of LaTeXML:                                                    | #
+# |  Public domain software, produced as part of work done by the       | #
+# |  United States Government & not subject to copyright in the US.     | #
+# |---------------------------------------------------------------------| #
+# | Bruce Miller <bruce.miller@nist.gov>                        #_#     | #
+# | http://dlmf.nist.gov/LaTeXML/                              (o o)    | #
+# \=========================================================ooo==U==ooo=/ #
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+DefRegister('\extrarowheight' => Dimension('0pt'));
+
+# Not sure how to effect these
+DefMacroI('\firsthline', undef, '\hline');
+DefMacroI('\lasthline',  undef, '\hline');
+
+DefColumnType('>{}', sub { $LaTeXML::BUILD_TEMPLATE->addBeforeColumn($_[1]->unlist); return; });
+DefColumnType('<{}', sub { $LaTeXML::BUILD_TEMPLATE->addAfterColumn($_[1]->unlist);  return; });
+
+# This is the same as p
+# but really needs to specify vertical alignment as centered
+DefColumnType('m{Dimension}', sub {
+    $LaTeXML::BUILD_TEMPLATE->addColumn(before => Tokens(T_CS('\vtop'), T_BEGIN),    #Tokens(T_BEGIN),
+      after => Tokens(T_END),
+      align => 'justify', width => $_[1], vattach => 'middle'); return; });
+# This is also the same as p
+# but really needs to specify vertical alignment as bottom
+DefColumnType('b{Dimension}', sub {
+    $LaTeXML::BUILD_TEMPLATE->addColumn(before => Tokens(T_CS('\vbox'), T_BEGIN),    #Tokens(T_BEGIN),
+      after => Tokens(T_END),
+      align => 'justify', width => $_[1], vattach => 'bottom'); return; });
+
+# Like @{}, but should NOT suppress intercolumn space
+DefColumnType('!{}', sub {
+    my ($gullet, $filler) = @_;
+    $LaTeXML::BUILD_TEMPLATE->addBetweenColumn($filler->unlist); return; });
+
+# Tentative: The following two are (as yet) untested....
+# I don't have current array.sty
+# Apparently the width is being ignored when alignment is not 'justify'...
+# Check this out against expected behaviour in LaTeX.
+DefColumnType('w{}{Dimension}', sub {
+    my ($gullet, $align, $width) = @_;
+    $align = ToString($align);
+    my %alignments = (l => 'left', c => 'center', r => 'right');
+    my $alignment  = $alignments{$align} || 'center';
+    $LaTeXML::BUILD_TEMPLATE->addColumn(before => Tokens(T_CS('\vtop'), T_BEGIN),
+      after => Tokens(T_END),
+      align => $alignment, width => $width); return; });
+
+DefColumnType('W{}{Dimension}', sub {
+    my ($gullet, $align, $width) = @_;
+    $align = ToString($align);
+    my %alignments = (l => 'left', c => 'center', r => 'right');
+    my $alignment  = $alignments{$align} || 'center';
+    $LaTeXML::BUILD_TEMPLATE->addColumn(before => Tokens(T_CS('\vtop'), T_BEGIN),
+      after => Tokens(T_END),
+      align => $alignment, width => $width); return; });
+
+# NOTE:  Come back & check this; is the arglist right??
+DefPrimitive('\newcolumntype{}[Number][]{}', sub {
+    my ($stomach, $char, $nargs, $opt, $replacement) = @_;
+    DefMacroI(T_CS('\NC@rewrite@' . ToString($char)), convertLaTeXArgs($nargs, $opt), $replacement);
+    return AddToPreamble(T_CS('\newcolumntype'), $char, $nargs, $opt, $replacement); });
+
+DefMacro('\arraybackslash', '\let\\\\\tabularnewline');
+1;

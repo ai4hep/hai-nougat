@@ -1,0 +1,39 @@
+# -*- mode: Perl -*-
+# /=====================================================================\ #
+# |  keyval                                                             | #
+# | Implementation of keyval for LaTeXML                                | #
+# |=====================================================================| #
+# | Thanks to Tom Wiesing <tom.wiesing@gmail.com>                       | #
+# | Part of LaTeXML:                                                    | #
+# |  Public domain software, produced as part of work done by the       | #
+# |  United States Government & not subject to copyright in the US.     | #
+# |---------------------------------------------------------------------| #
+# | Bruce Miller <bruce.miller@nist.gov>                        #_#     | #
+# | http://dlmf.nist.gov/LaTeXML/                              (o o)    | #
+# \=========================================================ooo==U==ooo=/ #
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+InputDefinitions('keyval', type => 'sty', noltxml => 1);
+
+# HOOK into define@key to make the latexml definitions as well
+DefPrimitive('\define@key{}{}[]{}', sub {
+    my ($stomach, $keyset, $key, $default, $code) = @_;
+
+    $keyset = ToString(Expand($keyset));
+    $key    = ToString(Expand($key));
+
+    DefKeyVal($keyset, $key, '', ToString($default), code => $code);
+
+    return; });
+
+# \setkeys{keyset}{keyvals}
+DefMacro('\setkeys{}', sub {
+    my ($gullet, $keyset) = @_;
+    my ($values) = ReadParameters($gullet, 'RequiredKeyVals:' . ToString(Expand($keyset)));
+    $values->setKeysExpansion; });
+
+#======================================================================
+1;

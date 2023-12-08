@@ -1,0 +1,33 @@
+# -*- mode: Perl -*-
+# /=====================================================================\ #
+# |  newtxmath                                                          | #
+# | Implementation for LaTeXML                                          | #
+# |=====================================================================| #
+# | Part of LaTeXML:                                                    | #
+# |  Public domain software, produced as part of work done by the       | #
+# |  United States Government & not subject to copyright in the US.     | #
+# |---------------------------------------------------------------------| #
+# | Bruce Miller <bruce.miller@nist.gov>                        #_#     | #
+# | http://dlmf.nist.gov/LaTeXML/                              (o o)    | #
+# \=========================================================ooo==U==ooo=/ #
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+#================================================================================
+# Load these to get the commands
+RequirePackage('amsmath');
+RequirePackage('ifthen');
+RequirePackage('etoolbox');
+RequirePackage('ifxetex');
+RequirePackage('ifluatex');
+RequirePackage('xkeyval');
+# This package is just a minor typesetting adjustment, skipping for now.
+#RequirePackage('centernot');
+#
+RequirePackage('amssymb');
+RequirePackage('txfonts');
+#================================================================================
+
+1;

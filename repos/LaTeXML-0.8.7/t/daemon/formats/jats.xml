@@ -1,0 +1,618 @@
+<?xml version="1.0"?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.2 20190208//EN" "JATS-journalpublishing1-2.dtd">
+<article>
+  <front>
+    <journal-meta>
+      <journal-id>not-yet-known</journal-id>
+      <issn>not-yet-known</issn>
+    </journal-meta>
+    <article-meta>
+      <article-id>not-yet-known</article-id>
+      <title-group>
+        <article-title>Sample amsart</article-title>
+      </title-group>
+      <contrib-group>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Blow</surname>
+            <given-names>Joe</given-names>
+          </name>
+          <address>
+            <addr-line>Somewhere, USA</addr-line>
+          </address>
+          <email>joe@blow</email>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Zappa</surname>
+            <given-names>Frank</given-names>
+          </name>
+          <address>
+            <addr-line>Baltimore</addr-line>
+          </address>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Else</surname>
+            <given-names>Someone</given-names>
+          </name>
+          <address>
+            <addr-line>Somewhere Else</addr-line>
+          </address>
+        </contrib>
+      </contrib-group>
+      <pub-date>
+        <year>February 14, 2013</year>
+      </pub-date>
+      <permissions>
+        <copyright-statement>unknown</copyright-statement>
+      </permissions>
+      <abstract>
+        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      </abstract>
+      <kwd-group>
+        <kwd>ams</kwd>
+        <kwd>article</kwd>
+        <kwd>markup</kwd>
+      </kwd-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec id="S1">
+      <title>1. Introduction</title>
+      <p id="S1.p1">As discussed in [<xref rid="bib.bib1">AS64</xref>],
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <disp-formula id="S1.E1">
+        <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S1.E1.m1" alttext="a+b," display="block">
+          <mml:mrow>
+            <mml:mrow>
+              <mml:mi>a</mml:mi>
+              <mml:mo>+</mml:mo>
+              <mml:mi>b</mml:mi>
+            </mml:mrow>
+            <mml:mo>,</mml:mo>
+          </mml:mrow>
+        </mml:math>
+      </disp-formula>
+      <disp-formula id="S1.E2">
+        <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S1.E2.m1" alttext="c+d," display="block">
+          <mml:mrow>
+            <mml:mrow>
+              <mml:mi>c</mml:mi>
+              <mml:mo>+</mml:mo>
+              <mml:mi>d</mml:mi>
+            </mml:mrow>
+            <mml:mo>,</mml:mo>
+          </mml:mrow>
+        </mml:math>
+      </disp-formula>
+      <fig id="S1.F1">
+        <caption>
+          <p>A Figure</p>
+        </caption>
+        <p>A Figure</p>
+      </fig>
+      <table-wrap id="S1.T1"><caption><p>A Table</p></caption>
+<table>
+<thead>
+<tr>
+<th>Heading</th>
+<th>Foo</th>
+<th>Bar</th></tr>
+</thead>
+<tbody>
+<tr>
+<th>a</th>
+<td><inline-formula><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S1.T1.m1" alttext="x" display="inline"><mml:mi>x</mml:mi></mml:math></inline-formula></td>
+<td><inline-formula><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S1.T1.m2" alttext="x^{2}" display="inline"><mml:msup><mml:mi>x</mml:mi><mml:mn>2</mml:mn></mml:msup></mml:math></inline-formula></td></tr>
+<tr>
+<th>b</th>
+<td><inline-formula><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S1.T1.m3" alttext="y^{2}" display="inline"><mml:msup><mml:mi>y</mml:mi><mml:mn>2</mml:mn></mml:msup></mml:math></inline-formula></td>
+<td><inline-formula><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S1.T1.m4" alttext="y" display="inline"><mml:mi>y</mml:mi></mml:math></inline-formula></td></tr>
+</tbody>
+</table></table-wrap>
+      <p>
+        <list list-type="bullet" id="S1.I1">
+          <list-item id="S1.I1.i1">
+            <p id="S1.I1.i1.p1">one</p>
+          </list-item>
+          <list-item id="S1.I1.i2">
+            <p>two</p>
+            <p>
+              <list list-type="bullet" id="S1.I1.i2.I1">
+                <list-item id="S1.I1.i2.I1.i1">
+                  <p id="S1.I1.i2.I1.i1.p1">one</p>
+                </list-item>
+                <list-item id="S1.I1.i2.I1.i2">
+                  <p id="S1.I1.i2.I1.i2.p1">two</p>
+                </list-item>
+              </list>
+            </p>
+          </list-item>
+        </list>
+      </p>
+      <p>
+        <list list-type="order" id="S1.I2">
+          <list-item id="S1.I2.i1">
+            <p id="S1.I2.i1.p1">one</p>
+          </list-item>
+          <list-item id="S1.I2.i2">
+            <p>two</p>
+            <p>
+              <list list-type="order" id="S1.I2.i2.I2">
+                <list-item id="S1.I2.i2.I2.i1">
+                  <p id="S1.I2.i2.I2.i1.p1">one</p>
+                </list-item>
+                <list-item id="S1.I2.i2.I2.i2">
+                  <p id="S1.I2.i2.I2.i2.p1">two</p>
+                </list-item>
+              </list>
+            </p>
+          </list-item>
+        </list>
+      </p>
+      <list id="S1.I3">
+        <list-item id="S1.I3.ix1">
+          <p id="S1.I3.ix1.p1">with some descriptive text.</p>
+        </list-item>
+        <list-item id="S1.I3.ix2">
+          <p id="S1.I3.ix2.p1">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        </list-item>
+        <list-item id="S1.I3.ix3">
+          <p id="S1.I3.ix3.p1">blah, blah. Moreover
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        </list-item>
+      </list>
+    </sec>
+    <sec id="S2">
+      <title>2. A Math Section</title>
+      <p id="S2.p1">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <p id="S2.p2">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      <disp-formula id="S2.Ex1">
+        <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.Ex1.m1" alttext="a=b" display="block">
+          <mml:mrow>
+            <mml:mi>a</mml:mi>
+            <mml:mo>=</mml:mo>
+            <mml:mi>b</mml:mi>
+          </mml:mrow>
+        </mml:math>
+      </disp-formula>
+      <disp-formula id="S2.E1">
+        <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E1.m1" alttext="a=b" display="block">
+          <mml:mrow>
+            <mml:mi>a</mml:mi>
+            <mml:mo>=</mml:mo>
+            <mml:mi>b</mml:mi>
+          </mml:mrow>
+        </mml:math>
+      </disp-formula>
+      <disp-formula id="S2.E2">
+        <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E2.m1" alttext="\begin{split}a&amp;=b+c-d\\&#10;&amp;\quad+e-f\\&#10;&amp;=g+h\\&#10;&amp;=i\end{split}" display="block">
+          <mml:mtable columnspacing="0pt" displaystyle="true" rowspacing="0pt">
+            <mml:mtr>
+              <mml:mtd class="ltx_align_right" columnalign="right">
+                <mml:mi>a</mml:mi>
+              </mml:mtd>
+              <mml:mtd class="ltx_align_left" columnalign="left">
+                <mml:mrow>
+                  <mml:mi/>
+                  <mml:mo>=</mml:mo>
+                  <mml:mrow>
+                    <mml:mrow>
+                      <mml:mi>b</mml:mi>
+                      <mml:mo>+</mml:mo>
+                      <mml:mi>c</mml:mi>
+                    </mml:mrow>
+                    <mml:mo>&#x2212;</mml:mo>
+                    <mml:mi>d</mml:mi>
+                  </mml:mrow>
+                </mml:mrow>
+              </mml:mtd>
+            </mml:mtr>
+            <mml:mtr>
+              <mml:mtd/>
+              <mml:mtd class="ltx_align_left" columnalign="left">
+                <mml:mrow>
+                  <mml:mrow>
+                    <mml:mo>+</mml:mo>
+                    <mml:mi>e</mml:mi>
+                  </mml:mrow>
+                  <mml:mo>&#x2212;</mml:mo>
+                  <mml:mi>f</mml:mi>
+                </mml:mrow>
+              </mml:mtd>
+            </mml:mtr>
+            <mml:mtr>
+              <mml:mtd/>
+              <mml:mtd class="ltx_align_left" columnalign="left">
+                <mml:mrow>
+                  <mml:mi/>
+                  <mml:mo>=</mml:mo>
+                  <mml:mrow>
+                    <mml:mi>g</mml:mi>
+                    <mml:mo>+</mml:mo>
+                    <mml:mi>h</mml:mi>
+                  </mml:mrow>
+                </mml:mrow>
+              </mml:mtd>
+            </mml:mtr>
+            <mml:mtr>
+              <mml:mtd/>
+              <mml:mtd class="ltx_align_left" columnalign="left">
+                <mml:mrow>
+                  <mml:mi/>
+                  <mml:mo>=</mml:mo>
+                  <mml:mi>i</mml:mi>
+                </mml:mrow>
+              </mml:mtd>
+            </mml:mtr>
+          </mml:mtable>
+        </mml:math>
+      </disp-formula>
+      <disp-formula id="S2.E3">
+        <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E3.m1" alttext="a+b+c+d+e+f\\&#10;+i+j+k+l+m+n" display="block">
+          <mml:mtable displaystyle="true" rowspacing="0pt">
+            <mml:mtr>
+              <mml:mtd class="ltx_align_left" columnalign="left">
+                <mml:mrow>
+                  <mml:mi>a</mml:mi>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>b</mml:mi>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>c</mml:mi>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>d</mml:mi>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>e</mml:mi>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>f</mml:mi>
+                </mml:mrow>
+              </mml:mtd>
+            </mml:mtr>
+            <mml:mtr>
+              <mml:mtd class="ltx_align_right" columnalign="right">
+                <mml:mrow>
+                  <mml:mrow>
+                    <mml:mo>+</mml:mo>
+                    <mml:mi>i</mml:mi>
+                  </mml:mrow>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>j</mml:mi>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>k</mml:mi>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>l</mml:mi>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>m</mml:mi>
+                  <mml:mo>+</mml:mo>
+                  <mml:mi>n</mml:mi>
+                </mml:mrow>
+              </mml:mtd>
+            </mml:mtr>
+          </mml:mtable>
+        </mml:math>
+      </disp-formula>
+      <disp-formula-group id="S3.EGx1">
+        <disp-formula id="S2.E4">
+          <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E4.m1" alttext="\displaystyle a_{1}=b_{1}+c_{1}" display="block">
+            <mml:mrow>
+              <mml:msub>
+                <mml:mi>a</mml:mi>
+                <mml:mn>1</mml:mn>
+              </mml:msub>
+              <mml:mo>=</mml:mo>
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>b</mml:mi>
+                  <mml:mn>1</mml:mn>
+                </mml:msub>
+                <mml:mo>+</mml:mo>
+                <mml:msub>
+                  <mml:mi>c</mml:mi>
+                  <mml:mn>1</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:mrow>
+          </mml:math>
+        </disp-formula>
+        <disp-formula id="S2.E5">
+          <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E5.m1" alttext="\displaystyle a_{2}=b_{2}+c_{2}-d_{2}+e_{2}" display="block">
+            <mml:mrow>
+              <mml:msub>
+                <mml:mi>a</mml:mi>
+                <mml:mn>2</mml:mn>
+              </mml:msub>
+              <mml:mo>=</mml:mo>
+              <mml:mrow>
+                <mml:mrow>
+                  <mml:mrow>
+                    <mml:msub>
+                      <mml:mi>b</mml:mi>
+                      <mml:mn>2</mml:mn>
+                    </mml:msub>
+                    <mml:mo>+</mml:mo>
+                    <mml:msub>
+                      <mml:mi>c</mml:mi>
+                      <mml:mn>2</mml:mn>
+                    </mml:msub>
+                  </mml:mrow>
+                  <mml:mo>&#x2212;</mml:mo>
+                  <mml:msub>
+                    <mml:mi>d</mml:mi>
+                    <mml:mn>2</mml:mn>
+                  </mml:msub>
+                </mml:mrow>
+                <mml:mo>+</mml:mo>
+                <mml:msub>
+                  <mml:mi>e</mml:mi>
+                  <mml:mn>2</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:mrow>
+          </mml:math>
+        </disp-formula>
+      </disp-formula-group>
+      <disp-formula-group id="S3.EGx2">
+        <disp-formula id="S2.E6">
+          <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E6.m3" alttext="\displaystyle a_{1}=b_{1}+c_{1}" display="inline">
+            <mml:mrow>
+              <mml:msub>
+                <mml:mi>a</mml:mi>
+                <mml:mn>1</mml:mn>
+              </mml:msub>
+              <mml:mo>=</mml:mo>
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>b</mml:mi>
+                  <mml:mn>1</mml:mn>
+                </mml:msub>
+                <mml:mo>+</mml:mo>
+                <mml:msub>
+                  <mml:mi>c</mml:mi>
+                  <mml:mn>1</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:mrow>
+          </mml:math>
+        </disp-formula>
+        <disp-formula id="S2.E7">
+          <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E7.m3" alttext="\displaystyle a_{2}=b_{2}+c_{2}-d_{2}+e_{2}" display="inline">
+            <mml:mrow>
+              <mml:msub>
+                <mml:mi>a</mml:mi>
+                <mml:mn>2</mml:mn>
+              </mml:msub>
+              <mml:mo>=</mml:mo>
+              <mml:mrow>
+                <mml:mrow>
+                  <mml:mrow>
+                    <mml:msub>
+                      <mml:mi>b</mml:mi>
+                      <mml:mn>2</mml:mn>
+                    </mml:msub>
+                    <mml:mo>+</mml:mo>
+                    <mml:msub>
+                      <mml:mi>c</mml:mi>
+                      <mml:mn>2</mml:mn>
+                    </mml:msub>
+                  </mml:mrow>
+                  <mml:mo>&#x2212;</mml:mo>
+                  <mml:msub>
+                    <mml:mi>d</mml:mi>
+                    <mml:mn>2</mml:mn>
+                  </mml:msub>
+                </mml:mrow>
+                <mml:mo>+</mml:mo>
+                <mml:msub>
+                  <mml:mi>e</mml:mi>
+                  <mml:mn>2</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:mrow>
+          </mml:math>
+        </disp-formula>
+      </disp-formula-group>
+      <disp-formula-group id="S3.EGx3">
+        <disp-formula-group id="S2.E8">
+          <disp-formula>
+            <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E8.m5" alttext="\displaystyle a_{11}=b_{11}" display="inline">
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>a</mml:mi>
+                  <mml:mn>11</mml:mn>
+                </mml:msub>
+                <mml:mo>=</mml:mo>
+                <mml:msub>
+                  <mml:mi>b</mml:mi>
+                  <mml:mn>11</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:math>
+          </disp-formula>
+          <disp-formula>
+            <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E8.m6" alttext="\displaystyle a_{12}=b_{12}" display="inline">
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>a</mml:mi>
+                  <mml:mn>12</mml:mn>
+                </mml:msub>
+                <mml:mo>=</mml:mo>
+                <mml:msub>
+                  <mml:mi>b</mml:mi>
+                  <mml:mn>12</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:math>
+          </disp-formula>
+        </disp-formula-group>
+        <disp-formula-group id="S2.E9">
+          <disp-formula>
+            <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E9.m5" alttext="\displaystyle a_{21}=b_{21}" display="inline">
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>a</mml:mi>
+                  <mml:mn>21</mml:mn>
+                </mml:msub>
+                <mml:mo>=</mml:mo>
+                <mml:msub>
+                  <mml:mi>b</mml:mi>
+                  <mml:mn>21</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:math>
+          </disp-formula>
+          <disp-formula>
+            <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E9.m6" alttext="\displaystyle a_{22}=b_{22}+c_{22}" display="inline">
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>a</mml:mi>
+                  <mml:mn>22</mml:mn>
+                </mml:msub>
+                <mml:mo>=</mml:mo>
+                <mml:mrow>
+                  <mml:msub>
+                    <mml:mi>b</mml:mi>
+                    <mml:mn>22</mml:mn>
+                  </mml:msub>
+                  <mml:mo>+</mml:mo>
+                  <mml:msub>
+                    <mml:mi>c</mml:mi>
+                    <mml:mn>22</mml:mn>
+                  </mml:msub>
+                </mml:mrow>
+              </mml:mrow>
+            </mml:math>
+          </disp-formula>
+        </disp-formula-group>
+      </disp-formula-group>
+      <p>Some text</p>
+      <disp-formula id="S2.E10">
+        <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.E10.m1" alttext="a=\text{something}" display="block">
+          <mml:mrow>
+            <mml:mi>a</mml:mi>
+            <mml:mo>=</mml:mo>
+            <mml:mtext>something</mml:mtext>
+          </mml:mrow>
+        </mml:math>
+      </disp-formula>
+      <statement id="Thmcorollary1">
+        <title>
+          <italic>Corollary 1</italic>
+          <italic>.</italic>
+        </title>
+        <p id="Thmcorollary1.p1">Whatever!</p>
+      </statement>
+      <statement id="Thmcorollaryx1">
+        <title>
+          <italic>Corollary</italic>
+          <italic>.</italic>
+        </title>
+        <p id="Thmcorollaryx1.p1">And whatever.</p>
+      </statement>
+      <disp-formula-group id="S3.EGx4">
+        <disp-formula-group id="S2.Ex2">
+          <disp-formula>
+            <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.Ex2.m5" alttext="\displaystyle a_{11}=b_{11}" display="inline">
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>a</mml:mi>
+                  <mml:mn>11</mml:mn>
+                </mml:msub>
+                <mml:mo>=</mml:mo>
+                <mml:msub>
+                  <mml:mi>b</mml:mi>
+                  <mml:mn>11</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:math>
+          </disp-formula>
+          <disp-formula>
+            <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.Ex2.m6" alttext="\displaystyle a_{12}=b_{12}" display="inline">
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>a</mml:mi>
+                  <mml:mn>12</mml:mn>
+                </mml:msub>
+                <mml:mo>=</mml:mo>
+                <mml:msub>
+                  <mml:mi>b</mml:mi>
+                  <mml:mn>12</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:math>
+          </disp-formula>
+        </disp-formula-group>
+        <disp-formula-group id="S2.Ex3">
+          <disp-formula>
+            <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.Ex3.m5" alttext="\displaystyle a_{21}=b_{21}" display="inline">
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>a</mml:mi>
+                  <mml:mn>21</mml:mn>
+                </mml:msub>
+                <mml:mo>=</mml:mo>
+                <mml:msub>
+                  <mml:mi>b</mml:mi>
+                  <mml:mn>21</mml:mn>
+                </mml:msub>
+              </mml:mrow>
+            </mml:math>
+          </disp-formula>
+          <disp-formula>
+            <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="S2.Ex3.m6" alttext="\displaystyle a_{22}=b_{22}+c_{22}" display="inline">
+              <mml:mrow>
+                <mml:msub>
+                  <mml:mi>a</mml:mi>
+                  <mml:mn>22</mml:mn>
+                </mml:msub>
+                <mml:mo>=</mml:mo>
+                <mml:mrow>
+                  <mml:msub>
+                    <mml:mi>b</mml:mi>
+                    <mml:mn>22</mml:mn>
+                  </mml:msub>
+                  <mml:mo>+</mml:mo>
+                  <mml:msub>
+                    <mml:mi>c</mml:mi>
+                    <mml:mn>22</mml:mn>
+                  </mml:msub>
+                </mml:mrow>
+              </mml:mrow>
+            </mml:math>
+          </disp-formula>
+        </disp-formula-group>
+      </disp-formula-group>
+      <sec id="S2.SS1">
+        <title>2.1. A subsection</title>
+        <p id="S2.SS1.p1">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        <sec id="S2.SS1.SSS1">
+          <title>2.1.1. A subsubsection</title>
+          <p id="S2.SS1.SSS1.p1">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+          <boxed-text id="S2.SS1.SSS1.Px1">
+            <caption>
+              <p>A Paragraph</p>
+            </caption>
+            <p id="S2.SS1.SSS1.Px1.p1">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          </boxed-text>
+        </sec>
+      </sec>
+    </sec>
+    <sec id="S3">
+      <title>3. <italic>Section with explicit font</italic></title>
+      <p id="S3.p1">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+    </sec>
+    <title>Sample amsart</title>
+  </body>
+  <back>
+    <ack>
+      <p>My Mommy.</p>
+    </ack>
+    <ref-list>
+      <title>References</title>
+      <ref id="bib.bib1">
+        <mixed-citation><person-group person-group-type="author"><name><surname>Stegun</surname><given-names>Abramowitz and </given-names></name></person-group><year>1964</year><article-title>Handbook of mathematical functions with formulas, graphs, and mathematical tables</article-title>M. Abramowitz and I. A. Stegun (<date><year>1964</year></date>)Handbook of mathematical functions with formulas, graphs, and mathematical tables.ninth Dover printing, tenth GPO printing edition,  Dover, New York.Cited by: &#xA7;1.</mixed-citation>
+      </ref>
+    </ref-list>
+    <app-group/>
+  </back>
+</article>

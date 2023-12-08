@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xml:lang="en" ns="http://www.w3.org/2000/svg" xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="">
+  <a:documentation>
+    SVG 1.1 Graphics Attribute Module
+    file: svg-graphics-attrib.rng
+
+    This is SVG, a language for describing two-dimensional graphics in XML.
+    Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
+
+    Modifications Copyright 2007 Mozilla Foundation
+
+    $Id$
+  </a:documentation>
+  <a:documentation>
+    Graphics Attribute
+
+        display, image-rendering, pointer-events, shape-rendering,
+        text-rendering, visibility
+
+    This module defines the Graphics attribute set.
+  </a:documentation>
+  <include href="urn:x-LaTeXML:RelaxNG:svg:svg-basic-graphics-attrib.rng"/>
+  <define name="SVG.image-rendering.attrib">
+    <optional>
+      <attribute name="image-rendering">
+        <choice>
+          <value type="string">auto</value>
+          <value type="string">optimizeSpeed</value>
+          <value type="string">optimizeQuality</value>
+          <value type="string">inherit</value>
+        </choice>
+      </attribute>
+    </optional>
+  </define>
+  <define name="SVG.pointer-events.attrib">
+    <optional>
+      <attribute name="pointer-events">
+        <choice>
+          <value type="string">visiblePainted</value>
+          <value type="string">visibleFill</value>
+          <value type="string">visibleStroke</value>
+          <value type="string">visible</value>
+          <value type="string">painted</value>
+          <value type="string">fill</value>
+          <value type="string">stroke</value>
+          <value type="string">all</value>
+          <value type="string">none</value>
+          <value type="string">inherit</value>
+        </choice>
+      </attribute>
+    </optional>
+  </define>
+  <define name="SVG.shape-rendering.attrib">
+    <optional>
+      <attribute name="shape-rendering">
+        <choice>
+          <value type="string">auto</value>
+          <value type="string">optimizeSpeed</value>
+          <value type="string">crispEdges</value>
+          <value type="string">geometricPrecision</value>
+          <value type="string">inherit</value>
+        </choice>
+      </attribute>
+    </optional>
+  </define>
+  <define name="SVG.text-rendering.attrib">
+    <optional>
+      <attribute name="text-rendering">
+        <choice>
+          <value type="string">auto</value>
+          <value type="string">optimizeSpeed</value>
+          <value type="string">optimizeLegibility</value>
+          <value type="string">geometricPrecision</value>
+          <value type="string">inherit</value>
+        </choice>
+      </attribute>
+    </optional>
+  </define>
+  <define name="SVG.Graphics.attrib" combine="interleave">
+    <ref name="SVG.image-rendering.attrib"/>
+    <ref name="SVG.pointer-events.attrib"/>
+    <ref name="SVG.shape-rendering.attrib"/>
+    <ref name="SVG.text-rendering.attrib"/>
+  </define>
+</grammar>

@@ -1,0 +1,26 @@
+\documentclass{article}
+\usepackage{latexml}
+\begin{document}
+\lxDeclare[role=ID]{$a$}%
+\lxDeclare[role=ID]{$b$}%
+\lxDeclare[role=ID]{$c$}%
+\lxDeclare[role=ID]{$d$}%
+\lxDeclare[role=ID]{$e$}%
+
+\section{Basic math}
+\[ a + b + c - d + e \]
+\[ a + b c - d  e \]
+\[ a b c / d e \]
+\[ a \times b \times c / d \times e \]
+
+\paragraph{N-ary special cases}
+\[ a \times b \times c \times d \]
+\[ (a \times b) \times (c \times d) \]
+\[ ((a \times b) \times (c \times d)) \]
+
+\[ a / b / c \]
+\[ \frac{a}{b} / c \]
+\[ a / \frac{b}{c} \]
+
+\[ a \times \fbox{$b \times c$}\]
+\end{document}

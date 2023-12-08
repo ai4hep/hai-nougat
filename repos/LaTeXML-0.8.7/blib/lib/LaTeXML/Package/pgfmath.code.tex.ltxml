@@ -1,0 +1,666 @@
+# -*- mode: Perl -*-
+# /=====================================================================\ #
+# |  pgfmath.code.tex                                                   | #
+# | Implementation for LaTeXML                                          | #
+# |---------------------------------------------------------------------| #
+# | Part of LaTeXML:                                                    | #
+# |  Public domain software, produced as part of work done by the       | #
+# |  United States Government & not subject to copyright in the US.     | #
+# |---------------------------------------------------------------------| #
+# | Bruce Miller <bruce.miller@nist.gov>                        #_#     | #
+# | http://dlmf.nist.gov/LaTeXML/                              (o o)    | #
+# \=========================================================ooo==U==ooo=/ #
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+use LaTeXML::Util::Geometry;
+use List::Util qw(min max);
+
+# Math functions needed here
+# Native: sin cos atan2 log exp sqrt rand abs
+use Math::Trig qw(
+  deg2rad rad2deg
+  tan atan asin acos
+  cot sec cosec
+  cosh sinh tanh);
+use POSIX qw(floor ceil);
+# round from Geometry
+# Defined below: factorial
+
+#======================================================================
+# Load pgf's TeX code for math, first
+InputDefinitions('pgfmath.code', type => 'tex', noltxml => 1);
+
+#======================================================================
+# Then redefine math operations to be done directly in Perl.
+# Using pgflibraryluamath.code.tex as a guide for what needs doing.
+#======================================================================
+# Note that these macros typically get a CS passed as argument whose expansion is the number
+# and that they assign the result, as a token list to \pgfmathresult.
+# Hopefully the savings in doing the math in Perl isn't overwhelmed by string conversion?
+our $PI      = Math::Trig::pi;
+our $LOG2    = log(2);
+our $LOG10   = log(10);
+our $E       = exp(1);
+our $epsilon = 0.00001;
+
+# Note: We need to lookup /pgf/trig format/deg/ or /rad/ !!!  (default is deg?)
+sub pgfmathargradians {
+  my ($arg) = @_;
+  if ($arg =~ s/\s*r$//) {
+    return $arg; }
+  elsif ($arg =~ s/\s*d$//) {    # ? is this also valid?
+    return deg2rad($arg); }
+  else {
+    return deg2rad($arg); } }
+
+sub pgfmathfactorial {
+  my ($arg) = @_;
+  my $f = 1;
+  while ($arg > 0) { $f *= $arg; $arg--; }
+  return $f; }
+
+# I'll bet the deired precision is a parameter somewhere?
+# Actually, the library uses exponents, but I generate them, for some reason I'm getting
+# "Could not parse \dddd e-06e0', ie, there's an EXTRA e0 added to my number
+# Maybe w/exponential, it' expecting "TeX FPU format"???;
+# there's some alternative formats with a FLAGS prefix
+#   <flag>Y<mantissa>e<exponent>] !!!
+# with flag for signs, nans, etc.
+# For the moment: fixed precision!
+# NOTE: Since this is for use in macros, it returns Tokens which will set \pgfmathresult,
+# but doesn't directly set it itself.
+sub pgfmathresult {
+  my ($value) = @_;
+  $value = sprintf("%06f", $value);
+  return Tokens(T_CS('\def'), T_CS('\pgfmathresult'), T_BEGIN, ExplodeText($value), T_END); }
+
+DefMacro('\@@@show@mathresult{}', sub {
+    my ($gulet, $result) = @_;
+    $result = ToString(Expand($result));
+    Debug("RESULT $result");
+    return; });
+
+#======================================================================
+
+DefMacro('\@@@show@pgfmatharg@{}', sub {
+    my ($gullet, $arg) = @_;
+    $arg = ToString(Expand($arg));
+    Debug("MATH ARG $arg");
+    return; });
+
+# A plain argument that is expanded in the parameter type definition,
+# then used for pgf computations.
+DefParameterType('pgfNumber', sub {
+    my ($gullet) = @_;
+    my $pgf_number = ToString(Expand($gullet->readArg()));
+    $pgf_number = "0" if $pgf_number eq '.';    # Apparently "." is a valid number!
+    return $pgf_number; });
+
+# This one expects {{number}{number}....} and returns an array of them
+DefParameterType('pgfNumbers', sub {
+    my ($gullet) = @_;
+    my $token;
+    do { $token = $gullet->readXToken(0);
+    } while (defined $token && $$token[1] == CC_SPACE);    # Inline ->getCatcode!
+
+    if ($token->getCatcode == CC_BEGIN) {
+      my @results = ();
+      my $result  = '';
+      my $level   = 1;
+      while ($token = $gullet->readXToken(0)) {
+        my $cc   = $$token[1];
+        my $char = $$token[0];
+        if ($cc == CC_END) {
+          $level--;
+          last unless $level;
+          if ($level == 1) {    # Next number
+            push(@results, $result); $result = ''; $char = ''; } }
+        elsif ($cc == CC_BEGIN) {
+          if ($level == 1) { $char = ''; }
+          $level++; }
+        $result .= $char; }
+      return [@results]; }
+    else {
+##      return Tokens($token); } });
+      return [$token->getString]; } });
+
+DefMacro('\pgfmathpi@', sub {
+    return pgfmathresult($PI); });
+DefMacro('\pgfmathe@', sub {
+    return pgfmathresult($E); });
+DefMacro('\pgfmathadd@ pgfNumber pgfNumber', sub {
+    return pgfmathresult($_[1] + $_[2]); });
+DefMacro('\pgfmathsubtract@ pgfNumber pgfNumber', sub {
+    return pgfmathresult($_[1] - $_[2]); });
+DefMacro('\pgfmathneg@ pgfNumber', sub {
+    return pgfmathresult(-$_[1]); });
+DefMacro('\pgfmathmultiply@ pgfNumber pgfNumber', sub {
+    return pgfmathresult($_[1] * $_[2]); });
+DefMacro('\pgfmathdivide@ pgfNumber pgfNumber', sub {
+    return pgfmathresult($_[1] / pgfmath_divisor($_[2])); });
+DefMacro('\pgfmathpow@ pgfNumber pgfNumber', sub {
+    return pgfmathresult($_[1]**$_[2]); });
+DefMacro('\pgfmathabs@ pgfNumber', sub {
+    return pgfmathresult(abs($_[1])); });
+DefMacro('\pgfmathround@ pgfNumber', sub {
+    return pgfmathresult(round($_[1])); });
+DefMacro('\pgfmathfloor@ pgfNumber', sub {
+    return pgfmathresult(floor($_[1])); });
+DefMacro('\pgfmathceil@ pgfNumber', sub {
+    return pgfmathresult(ceil($_[1])); });
+#DefMacro('\pgfmathgcd@ pgfNumber pgfNumber', sub {
+
+# DefMacro('\pgfmathisprime@ pgfNumber pgfNumber', sub {
+# Seems these accept comma separated values?
+# Or is it {{num}{num}...} ????
+DefMacro('\pgfmathmax@ pgfNumbers', sub {
+    my ($gullet, $args) = @_;
+    #    my @args = split(/,/, $args);
+    my @args = @$args;
+    return pgfmathresult(max(@args)); });
+DefMacro('\pgfmathmin@ pgfNumbers', sub {
+    my ($gullet, $args) = @_;
+    #    my @args = split(/,/, $args);
+    my @args = @$args;
+    return pgfmathresult(min(@args)); });
+DefMacro('\pgfmathsin@ pgfNumber', sub {
+    return pgfmathresult(sin(pgfmathargradians($_[1]))); });
+DefMacro('\pgfmathcos@ pgfNumber', sub {
+    return pgfmathresult(cos(pgfmathargradians($_[1]))); });
+DefMacro('\pgfmathtan@ pgfNumber', sub {
+    return pgfmathresult(tan(pgfmathargradians($_[1]))); });
+# One mod is truncated (can be neg) other is floored, the latter should be capitalized?
+# Apparently mod towards 0
+sub pgfmath_mod_trunc {
+  my ($arg1, $arg2) = @_;
+  return ($arg1 / $arg2 < 0
+    ? -(abs($arg1) % abs($arg2))
+    : abs($arg1) % abs($arg2)); }
+
+sub pgfmath_mod_floor {
+  my ($arg1, $arg2) = @_;
+  return ($arg1 / $arg2 < 0
+    ? -(abs($arg1) % abs($arg2)) + abs($arg2)
+    : abs($arg1) % abs($arg2)); }
+DefMacro('\pgfmathmod@ pgfNumber pgfNumber', sub {
+    my ($gullet, $arg1, $arg2) = @_;
+    return pgfmathresult(pgfmath_mod_trunc($arg1, $arg2)); });
+# Apparently mod twoards - infty
+# (but lua version is incorrect if x > 0, y < 0)
+DefMacro('\pgfmathmod@ pgfNumber pgfNumber', sub {
+    my ($gullet, $arg1, $arg2) = @_;
+    return pgfmathresult(pgfmath_mod_floor($arg1, $arg2)); });
+DefMacro('\pgfmathrad@ pgfNumber', sub {
+    return pgfmathresult(deg2rad($_[1])); });
+DefMacro('\pgfmathdeg@ pgfNumber', sub {
+    return pgfmathresult(rad2deg($_[1])); });
+DefMacro('\pgfmathatan@ pgfNumber', sub {
+    return pgfmathresult(rad2deg(atan($_[1]))); });
+DefMacro('\pgfmathatantwo@ pgfNumber pgfNumber', sub {
+    return pgfmathresult(rad2deg(atan2($_[1], $_[2]))); });
+# Reverse of tikz, but...
+Let(T_CS('\pgfmathatan2@'), T_CS('\pgfmathatantwo@'));
+DefMacro('\pgfmathasin@ pgfNumber', sub {
+    return pgfmathresult(rad2deg(asin($_[1]))); });
+DefMacro('\pgfmathacos@ pgfNumber', sub {
+    return pgfmathresult(rad2deg(acos($_[1]))); });
+DefMacro('\pgfmathcot@ pgfNumber', sub {
+    return pgfmathresult(cot(pgfmathargradians($_[1]))); });
+DefMacro('\pgfmathsec@ pgfNumber', sub {
+    return pgfmathresult(sec(pgfmathargradians($_[1]))); });
+DefMacro('\pgfmathcosec@ pgfNumber', sub {
+    return pgfmathresult(cosec(pgfmathargradians($_[1]))); });
+DefMacro('\pgfmathexp@ pgfNumber', sub {
+    return pgfmathresult(exp($_[1])); });
+DefMacro('\pgfmathln@ pgfNumber', sub {
+    return pgfmathresult(log($_[1])); });
+DefMacro('\pgfmathlogten@ pgfNumber', sub {
+    return pgfmathresult(log($_[1]) / $LOG10); });
+DefMacro('\pgfmathsqrt@ pgfNumber', sub {
+    return pgfmathresult(sqrt($_[1])); });
+DefMacro('\pgfmathrnd@', sub {
+    return pgfmathresult(rand()); });
+DefMacro('\pgfmathrand@', sub {
+    return pgfmathresult(1 + rand(2)); });
+DefMacro('\pgfmathfactorial@', sub {
+    return pgfmathresult(pgfmathfactorial($_[1])); });
+DefMacro('\pgfmathreciprocal@ pgfNumber', sub {
+    return pgfmathresult(1 / pgfmath_divisor($_[1])); });
+
+# Stuff for computability with the calc package .
+DefMacro('\pgfmath@calc@real {}',     '#1');
+DefMacro('\pgfmath@calc@minof {}{}',  'min(#1,#2)');
+DefMacro('\pgfmath@calc@maxof {}{}',  'max(#1,#2)');
+DefMacro('\pgfmath@calc@ratio {}{}',  '#1/#2');
+DefMacro('\pgfmath@calc@widthof {}',  'width("#1")');
+DefMacro('\pgfmath@calc@heightof {}', 'height("#1")');
+DefMacro('\pgfmath@calc@depthof {}',  'depth("#1")');
+
+sub pgfmath_divisor {
+  my $divisor = 0.0 + $_[0];
+  if (!$divisor) {
+# TODO: Once we are rock-solid certain latexml will not encounter interpretation bugs when dealing with pgf
+#       this warning can be elevated to an Error.
+    Warn("unexpected", "<number>", "pgfmath: divisor should never be zero!");
+    return $epsilon; }
+  else {
+    return $divisor; } }
+#======================================================================
+DefMacro('\@@@test@mathresult{}{}{}', sub {
+    my ($gullet, $input, $pgfresult, $lxresult) = @_;
+    $input     = ToString($input);
+    $lxresult  = ToString(Expand($lxresult));
+    $pgfresult = ToString(Expand($pgfresult));
+    # Try to figure out if the results are "Close Enough"
+    # pgf seems to keep things as integer, when they've got no decimal,
+    # but perl doesn't distinguish, and typically prints 0.0 as 0 and such
+    my $d;
+    if (($lxresult ne $pgfresult)
+      && (($d = abs($lxresult - $pgfresult)) != 0.0)
+      && ($d > 0.05 * max(abs($lxresult), abs($pgfresult)))) {
+      Warn('mismatch', 'pgfparse', $gullet,
+        "Parse of '$input'",
+        "PGF: '$pgfresult'",
+        "LTX: '$lxresult'"); }
+    else {
+      Debug("PGFParse OK '$input' => '$pgfresult' or '$lxresult'"); }
+    return; });
+
+DefMacro('\pgfmath@smuggleone Until:\endgroup', sub {
+    my ($gullet, $arg) = @_;
+    $arg = $$arg[0] if (ref $arg eq 'LaTeXML::Core::Tokens');
+    my $def = LookupDefinition($arg);
+    if (my $is_expandable = $def && $def->isExpandable) {
+      # Texlive 2020 definition:
+      return (T_CS('\expandafter'), T_CS('\endgroup'), T_CS('\expandafter'),
+        T_CS('\def'), T_CS('\expandafter'), $arg, T_CS('\expandafter'),
+        T_BEGIN, $arg, T_END); }
+    else {
+      # do nothing for primitives, bindings already declare them global,
+      # no need to smuggle up. In fact, infinite loop if done carelessly.
+      return T_CS('\endgroup'); } });
+
+our $PGFMATHGrammarSpec;
+our $PGFMATHGrammar;
+our $PGFMathFunctions;
+
+# NOTE: haven't done \pgfmathpostparse
+# NOTE: need to handle \ifpgfmathunitsdeclared
+# Version issue?
+RawTeX(<<'EoTeX');
+\@ifundefined{pgfmathunitsdeclaredtrue}{\newif\ifpgfmathunitsdeclared}{}
+\@ifundefined{pgfmathmathunitsdeclaredtrue}{\newif\ifpgfmathmathunitsdeclared}{}
+EoTeX
+
+our $PGMATH_UNITS_REGEXP = undef;
+
+sub pgfmathparse {
+  my ($gullet, $tokens) = @_;
+  SetCondition(T_CS('\ifpgfmathunitsdeclared'),     0, 'global');
+  SetCondition(T_CS('\ifpgfmathmathunitsdeclared'), 0, 'global');
+  # Stuff for calc compatibility.
+  Let('\real',     '\pgfmath@calc@real');
+  Let('\minof',    '\pgfmath@calc@minof');
+  Let('\maxof',    '\pgfmath@calc@maxof');
+  Let('\ratio',    '\pgfmath@calc@ratio');
+  Let('\widthof',  '\pgfmath@calc@widthof');
+  Let('\heightof', '\pgfmath@calc@heightof');
+  Let('\depthof',  '\pgfmath@calc@depthof');
+  my $string = (ref $tokens ? ToString(Expand($tokens)->stripBraces) : $tokens);
+  $string =~ s/^\s+//; $string =~ s/\s+$//; $string =~ s/\s+/ /gs;
+  my $input = $string;
+  my $result;
+  $PGMATH_UNITS_REGEXP
+    = join('|', qw(em ex mu), keys %{ $STATE->lookupValue('UNITS') })
+
+    unless $PGMATH_UNITS_REGEXP;
+  # Also common would be unit=\pgflinewidth (height?)
+  if ($string =~ /^([+-]?[\d\.]+)($PGMATH_UNITS_REGEXP)$/) {
+    $result = pgfmath_convert($1, $2);
+    $string = ''; }
+  if ($string && !$result
+    && ($string !~ /\W(?:sin|cos|tan|cot|sec|cosec)\W/)) { {
+      local $LaTeXML::IGNORE_ERRORS = 1;
+      local $@;
+      no warnings;
+      $result = eval $string;
+      if (!$@) {
+        # need to erase string when perl eval works, to keep it consistent with recdescent
+        $string = ''; }
+    } }
+  if ($string && !$result) {
+    $PGFMATHGrammar = Parse::RecDescent->new($PGFMATHGrammarSpec) unless $PGFMATHGrammar;
+    $result         = $PGFMATHGrammar->expr(\$string); }
+
+  $result = $result || 0.0;
+  $string =~ s/^[\)\]]+$//;    # Forgive excess trailing ) !?!?!?!?!
+  if ($string) {
+    Error('pgfparse', 'pgfparse', $gullet,
+      "Parse of '$input' failed",
+      "LTX: '$result'",
+      "Left: $string"); }
+  # There seem to be some pesky expectations for the results
+  if ($result == 0.0) {
+    $result = "0."; }
+  # NOT really correct, but would like to use an internal to distinguish 1.0 from int(1.0)!!!
+  elsif ($result == int($result)) {
+    $result = int($result) . '.'; }
+  else {                       # We don't want scientific notation output!!!
+    $result = sprintf("%f", $result); }
+  return $result; }
+
+DefMacro('\lx@pgfmath@parseX{}', sub {
+    my ($gullet, $tokens) = @_;
+    return Tokens(T_CS('\def'), T_CS('\lx@pgfmathresult'),
+      T_BEGIN, pgfmathparse($gullet, $tokens), T_END); });
+
+DefMacro('\lx@pgfmath@parse{}', sub {
+    my ($gullet, $tokens) = @_;
+    return pgfmathresult(pgfmathparse($gullet, $tokens)); });
+
+DefPrimitive('\pgfmathsetlength DefToken {}', sub {
+    my ($stomach, $register, $tokens) = @_;
+    my $gullet = $stomach->getGullet;
+    my $length;
+    my @tokens = $tokens->unlist;
+    while (@tokens && ($tokens[0]->equals(T_SPACE))) {
+      shift(@tokens); }
+    if (@tokens && ($tokens[0]->equals(T_OTHER('+')))) {
+      # pgf does this, but probably only size is relevant to LaTeXML's sloppy sizing?
+      # \begingroup \pgfmath@selectfont \endgroup !!!
+      $gullet->unread(@tokens);
+      $length = $gullet->readGlue; }
+    else {
+      $length = pgfmathparse($gullet, $tokens);
+      if (IfCondition(T_CS('\ifpgfmathmathunitsdeclared'))) {
+        $length = MuDimension($length * $STATE->convertUnit('mu')); }
+      else {
+        $length = Dimension($length * 65536); } }
+    AssignRegister($register, $length); });
+
+Let('\@orig@pgfmathparse', '\pgfmathparse');
+### This seems to indicate that \pgfmathparse is called quite a bit....
+
+DefRegister('\lx@save@tracingmacros'   => Number(0));
+DefRegister('\lx@save@tracingcommands' => Number(0));
+DefMacro('\lx@test@pgfmath@parse{}',
+  '\lx@pgfmath@parseX{#1}'
+    . '\lx@save@tracingmacros=\tracingmacros\relax\tracingmacros=0\relax'
+    . '\lx@save@tracingcommands=\tracingcommands\relax\tracingcommands=0\relax'
+    . '\@orig@pgfmathparse{#1}'
+    . '\tracingmacros=\lx@save@tracingmacros\relax'
+    . '\tracingcommands=\lx@save@tracingcommands\relax'
+    . '\@@@test@mathresult{#1}{\pgfmathresult}{\lx@pgfmathresult}');
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Leave BOTH of the following commented out, to use pgfmath's own parser.
+# Use this to use our version of the pgfmath parser
+Let('\pgfmathparse', '\lx@pgfmath@parse');
+# Use this to run both and compare the results.
+#Let('\pgfmathparse', '\lx@test@pgfmath@parse');
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+sub pgfmath_apply {
+  my ($op, @args) = @_;
+  my $tok;
+  if (my $fcn = $$PGFMathFunctions{$op}) {
+    return &$fcn(@args); }
+  elsif (my $defn = LookupDefinition($tok = T_CS('\pgfmath' . $op . '@'))) {    # User defined op?
+        # Mindbogglingly inefficient, I think...
+    Expand(Invocation($tok, map { (ref $_ ? $_ : T_OTHER($_)) } @args));    # Sets \pgfmathresult
+    return ToString(Expand(T_CS('\pgfmathresult'))); }
+  else {
+    Error('unexpected', $op, undef, "Unimplemented pgfmath operator '$op'");
+    return 0; } }
+
+sub pgfmath_leftrecapply {
+  my (@stuff) = @_;
+  my $result = shift(@stuff);
+  while (@stuff) {
+    my $op  = shift(@stuff);
+    my $arg = shift(@stuff);
+    if (my $fcn = $$PGFMathFunctions{$op}) {
+      $result = &$fcn($result, $arg); }
+    else {
+      Error('unexpected', $op, undef, "Unimplemented pgfmath operator '$op'");
+      return 0; } }
+  return $result; }
+
+# NOTE: Do NOT use ->ptValue here, since it rounds to 2 decimals
+# (which is sensible for the ultimate output, but wreaks havoc w/ accuracy here!)
+sub pgfmath_convert {
+  my ($number, $unit) = @_;
+  SetCondition(T_CS('\ifpgfmathunitsdeclared'),     1, 'global');                    # Saw units!
+  SetCondition(T_CS('\ifpgfmathmathunitsdeclared'), 1, 'global') if $unit eq 'mu';
+  return $number * $STATE->convertUnit($unit) / 65536; }    # return value in pts!
+
+sub pgfmath_register {
+  my ($cs) = @_;
+  my $reg = LookupRegister($cs);
+  SetCondition(T_CS('\ifpgfmathunitsdeclared'), 1, 'global');
+  if (!$reg) {
+    return 0.0; }
+  return (ref $reg eq 'LaTeXML::Common::Number' ? $reg->valueOf : $reg->valueOf / 65536); }
+
+sub pgfmath_setunitsdeclared {
+  SetCondition(T_CS('\ifpgfmathunitsdeclared'), 1, 'global');
+  return; }
+
+sub pgfmath_getwidth {
+  my ($cs) = @_;
+  # Or could be an explicit Number?
+  my $reg   = $cs  && LookupRegister($cs);
+  my $box   = $reg && 'box' . $reg->valueOf;
+  my $stuff = $box && LookupValue($box);
+  return ($stuff ? $stuff->getWidth->valueOf / 65536 : Dimension(0)); }
+
+sub pgfmath_getheight {
+  my ($cs) = @_;
+  # Or could be an explicit Number?
+  my $reg   = $cs  && LookupRegister($cs);
+  my $box   = $reg && 'box' . $reg->valueOf;
+  my $stuff = $box && LookupValue($box);
+  return ($stuff ? $stuff->getHeight->valueOf / 65536 : Dimension(0)); }
+
+sub pgfmath_getdepth {
+  my ($cs) = @_;
+  # Or could be an explicit Number?
+  my $reg   = $cs  && LookupRegister($cs);
+  my $box   = $reg && 'box' . $reg->valueOf;
+  my $stuff = $box && LookupValue($box);
+  return ($stuff ? $stuff->getDepth->valueOf / 65536 : Dimension(0)); }
+
+# Presumably should hook into \pgfmathnotifynewdeclarefunction
+# as possibility to register a function, instead of checking at parse time?
+sub pgfmath_checkuserconstant {
+  my ($name) = @_;
+  if (LookupDefinition(T_CS('\pgfmath@function@' . $name))) {
+    my $aritycs = T_CS('\pgfmath@operation@' . $name . '@arity');
+    my $arity   = LookupDefinition($aritycs) && ToString(Expand($aritycs));
+    return ($arity ? undef : $name); }
+  return; }
+
+sub pgfmath_checkuserfunction {
+  my ($name) = @_;
+  if (LookupDefinition(T_CS('\pgfmath@function@' . $name))) {
+    my $aritycs = T_CS('\pgfmath@operation@' . $name . '@arity');
+    my $arity   = LookupDefinition($aritycs) && ToString(Expand($aritycs));
+    return ($arity && ($arity > 0) ? $name : undef); }
+  return; }
+
+BEGIN {
+  $PGFMathFunctions = {
+    '=='       => sub { $_[0] == $_[1]; },
+    equal      => sub { $_[0] == $_[1]; },
+    '>'        => sub { $_[0] > $_[1]; },
+    greater    => sub { $_[0] > $_[1]; },
+    '<'        => sub { $_[0] < $_[1]; },
+    less       => sub { $_[0] < $_[1]; },
+    '!='       => sub { $_[0] != $_[1]; },
+    notequal   => sub { $_[0] != $_[1]; },
+    '>='       => sub { $_[0] >= $_[1]; },
+    notless    => sub { $_[0] >= $_[1]; },
+    '<='       => sub { $_[0] <= $_[1]; },
+    notgreater => sub { $_[0] <= $_[1]; },
+    '&&'       => sub { $_[0] && $_[1]; },
+    'and'      => sub { $_[0] && $_[1]; },
+    '||'       => sub { $_[0] || $_[1]; },
+    or         => sub { $_[0] || $_[1]; },
+    '+'        => sub { (defined $_[1] ? $_[0] + $_[1] : $_[0]); },
+    'add'      => sub { (defined $_[1] ? $_[0] + $_[1] : $_[0]); },
+    '-'        => sub { (defined $_[1] ? $_[0] - $_[1] : -$_[0]); },    # prefix or infix
+    neg        => sub { -$_[0]; },
+    '*'        => sub { $_[0] * $_[1]; },
+    multiply   => sub { $_[0] * $_[1]; },
+    '/'        => sub { $_[0] / pgfmath_divisor($_[1]); },
+    divide     => sub { $_[0] / pgfmath_divisor($_[1]); },
+    div        => sub { int($_[0] / pgfmath_divisor($_[1])); },
+    '!'        => sub { pgfmathfactorial($_[0]); },
+    'r'        => sub { rad2deg($_[0]); },
+    e          => sub { $E; },
+    pi         => sub { $PI; },
+    abs        => sub { abs($_[0]); },
+    acos       => sub { acos($_[0]); },
+    array      => sub { },
+    asin       => sub { rad2deg(asin($_[0])); },
+    atan       => sub { rad2deg(atan($_[0])); },
+    atan2      => sub { rad2deg(atan2($_[0], $_[1])); },
+    angle      => sub { rad2deg(atan2($_[0], $_[1])); },    # Assume same? Where's documentation?
+                                                            #    bin   => sub { },
+    ceil       => sub { ceil($_[0]); },
+    cos        => sub { cos(pgfmathargradians($_[0])); },
+    cosec      => sub { cosec(pgfmathargradians($_[0])); },
+    cosh       => sub { cosh($_[0]); },
+    cot        => sub { cot(pgfmathargradians($_[0])); },
+    deg        => sub { rad2deg($_[0]); },
+    #    depth => sub { },
+    exp       => sub { exp($_[0]); },
+    factorial => sub { pgfmathfactorial($_[0]); },
+    false     => sub { 0; },
+    floor     => sub { floor($_[0]); },
+    #    frac       => sub { },
+    #    gcd        => sub { },
+    #    height     => sub { },
+    hex        => sub { sprintf("%x", $_[0]); },
+    Hex        => sub { sprintf("%X", $_[0]); },
+    int        => sub { int($_[0]); },
+    ifthenelse => sub { ($_[0] ? $_[1] : $_[2]); },
+    iseven     => sub { (int($_[0]) % 2) == 0 },
+    isodd      => sub { (int($_[0]) % 2) == 1 },
+    #    isprime    => sub { },
+    ln    => sub { log($_[0]); },
+    log10 => sub { log($_[0]) / $LOG10; },
+    log2  => sub { log($_[0]) / $LOG2; },
+    max   => sub { max(@_); },
+    min   => sub { min(@_); },
+    mod   => sub { pgfmath_mod_trunc($_[0], $_[1]); },
+    Mod   => sub { pgfmath_mod_floor($_[0], $_[1]); },
+    not   => sub { !$_[0]; },
+    oct   => sub { sprintf("%o", $_[0]); },
+    pow   => sub { $_[0]**$_[1]; },
+    rad   => sub { deg2rad($_[0]); },
+    #    rand     => sub { },
+    #    random   => sub { },
+    real => sub { $_[0] + 0.0; },
+    #    rnd      => sub { },
+    round    => sub { round($_[0]); },
+    scalar   => sub { SetCondition(T_CS('\ifpgfmathunitsdeclared'), 0, 'global'); $_[0]; },
+    sec      => sub { sec(pgfmathargradians($_[0])); },
+    sign     => sub { ($_[0] > 0 ? 1 : ($_[0] < 0 ? -1 : 0)); },
+    sin      => sub { sin(pgfmathargradians($_[0])); },
+    sinh     => sub { sinh($_[0]); },
+    sqrt     => sub { sqrt($_[0]); },
+    subtract => sub { $_[0] - $_[1]; },
+    tan      => sub { tan(pgfmathargradians($_[0])); },
+    tanh     => sub { tanh($_[0]); },
+    true     => sub { 1; },
+    veclen   => sub { sqrt($_[0] * $_[0] + $_[1] * $_[1]); },
+    #    width    => sub { },
+  };
+
+  $::RD_HINT = 1;
+
+  # Why can't I manage to import a few functions to be visible to the grammar actions?
+  # NOTE Not yet done: quoted strings, extensible functions
+  $PGFMATHGrammarSpec = << 'EoGrammar';
+#  {BEGIN { use LaTeXML::Package::Pool; }}
+#  { use LaTeXML::Package::Pool; }
+#  { LaTeXML::Package::Pool->import(qw(pgfmath_apply)); }
+  <skip:'[\s\{\}]*'>            # braces ignored during parse...
+  formula :
+    expr /\?/ expr /:/ expr { ($item[1] ? $item[3] : $item[5]); }
+  | expr CMP expr           { LaTeXML::Package::Pool::pgfmath_apply($item[2], $item[1], $item[3]); }
+  | expr
+
+expr :
+     term (ADDOP term { [$item[1],$item[2]]; })(s?)
+          { LaTeXML::Package::Pool::pgfmath_leftrecapply($item[1],map(@$_,@{$item[2]})); }
+
+  term :
+     factor (MULOP factor { [$item[1],$item[2]]; })(s?)
+          { LaTeXML::Package::Pool::pgfmath_leftrecapply($item[1],map(@$_,@{$item[2]})); }
+
+   # addPostfix[$base] ; adds any following sub/super scripts to $base.
+   addPostfix :
+          /^\Z/ { $arg[0];}   # short circuit!
+        | POSTFIX          addPostfix[LaTeXML::Package::Pool::pgfmath_apply($item[1],$arg[0])]
+        | { $arg[0]; }
+  factor : simplefactor /\^/ simplefactor { $item[1] ** $item[3]; }
+    | simplefactor addPostfix[$item[1]]
+
+  simplefactor :
+      /\(/ formula /(?:\)|^\Z)/     { $item[2]; } # Let unclosed () succeed at end?
+    | PREFIX simplefactor   { LaTeXML::Package::Pool::pgfmath_apply($item[1],$item[2]); }
+    | FUNCTION /\(/ formula (/,/ formula { $item[2]; })(s?) /\)/
+           { LaTeXML::Package::Pool::pgfmath_apply($item[1], $item[3], @{$item[4]}); }
+    | FUNCTION0                   { LaTeXML::Package::Pool::pgfmath_apply($item[1]); }
+    | NUMBER UNIT          { LaTeXML::Package::Pool::pgfmath_convert($item[1],$item[2]); }
+    | NUMBER REGISTER      { LaTeXML::Package::Pool::pgfmath_apply('*', $item[1], $item[2]); }
+      # really count_register dimension_register!
+    | REGISTER REGISTER    { LaTeXML::Package::Pool::pgfmath_apply('*', $item[1], $item[2]); }
+    | NUMBER
+    | REGISTER
+
+    REGISTER :  # these need to set dimension flag!!!
+      /\\wd/ CS            { LaTeXML::Package::Pool::pgfmath_setunitsdeclared();
+                             LaTeXML::Package::Pool::pgfmath_getwidth($item[2]); }
+    | /\\ht/ CS            { LaTeXML::Package::Pool::pgfmath_setunitsdeclared();
+                             LaTeXML::Package::Pool::pgfmath_getheight($item[2]); }
+    | /\\dp/ CS            { LaTeXML::Package::Pool::pgfmath_setunitsdeclared();
+                             LaTeXML::Package::Pool::pgfmath_getdepth($item[2]); }
+    | CS                   { LaTeXML::Package::Pool::pgfmath_register($item[1]); }
+
+    CS : /\\[a-zA-Z@]*/
+
+    # NOTE: Need to recognize octal, binary and hex!  AND scientific notation!
+    NUMBER :
+      /(?:\d+\.?\d*|\d*\.?\d+)(:?[eE][+-]?\d+)?/ { $item[1]+0.0; }
+    | /0b[01]+/                  { oct($item[1]); } # !!!
+    | /0x[0-9a-fA-F]+/           { hex($item[1]); }
+    | /0[0-9]+/                  { oct($item[1]); }
+
+    UNIT :
+      /(?:ex|em|pt|pc|in|bp|cm|mm|dd|cc|sp)/
+
+    FUNCTION0 : /(?:e|pi|false|rand|rnd|true)/
+        | /([a-zA-Z][a-zA-Z0-9]*)/ { LaTeXML::Package::Pool::pgfmath_checkuserconstant($item[1]); }
+
+    FUNCTION : /(?:abs|acos|asin|atan2|atan|angle|bin|ceil|cos|cosec|cosh|cot|deg|exp|factorial|floor|frac|hex|Hex|int|iseven|isodd|isprime|ln|log10|log2|neg|not|oct|rad|real|round|sec|sign|sin|sinh|sqrt|tan|tanh|add|and|divide|div|equal|gcd|greater|less|max|min|mod|Mod|multiply|notequal|notgreater|notless|or|pow|random|subtract|ifthenelse|veclen)/
+        | /([a-zA-Z][a-zA-Z0-9]*)/ { LaTeXML::Package::Pool::pgfmath_checkuserfunction($item[1]); }
+# ? array|scalar
+# These take boxes!  depth|height|width
+
+    CMP     : /==/ | /\>/ | /\</ | /!=/ | /\>=/ | /\<=/ | /&&/ | /||/
+    PREFIX  : /\-/ | /!/ | /\+/
+    POSTFIX : /!/ | /r/
+    ADDOP   : /\+/ | /=/ | /\-/
+    MULOP   : /\*/ | /\//
+
+EoGrammar
+
+}
+
+#======================================================================
+1;

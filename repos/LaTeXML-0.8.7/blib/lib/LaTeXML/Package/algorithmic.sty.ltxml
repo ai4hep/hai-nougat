@@ -1,0 +1,73 @@
+# -*- mode: Perl -*-
+# /=====================================================================\ #
+# |  algorithmic                                                        | #
+# | Implementation for LaTeXML                                          | #
+# |=====================================================================| #
+# | Part of LaTeXML:                                                    | #
+# |  Public domain software, produced as part of work done by the       | #
+# |  United States Government & not subject to copyright in the US.     | #
+# |---------------------------------------------------------------------| #
+# | Bruce Miller <bruce.miller@nist.gov>                        #_#     | #
+# | http://dlmf.nist.gov/LaTeXML/                              (o o)    | #
+# \=========================================================ooo==U==ooo=/ #
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+# Was algorithmicx.sty loaded? If so: BAIL immediately.
+# (deeply incompatible)
+if (IsDefined(T_CS('\algorithmic'))) {
+  Warn("unexpected", "\\algorithmic",
+    "Another package has already defined \\algorithmic, will not load algorithmic.sty");
+  return 1; }
+
+# Read in the LaTeX definitions and redefine a few things strategically.
+InputDefinitions('algorithmic', type => 'sty', noltxml => 1);
+
+Let('\lx@orig@algorithmic', '\algorithmic');
+DefMacro('\algorithmic', '\lx@setup@algorithmic\lx@orig@algorithmic');
+DefPrimitive('\lx@setup@algorithmic', sub {
+    ResetCounter('ALC@line');
+    # If we are not within an algorithm environment, step the counter for its id's
+    if (!grep { $_ eq 'algorithm'; } $STATE->lookupStackedValues('current_environment')) {
+      RefStepID('algorithm'); }
+    Let('\list',    '\lx@algorithmic@beginlist');
+    Let('\endlist', '\lx@algorithmic@endlist');
+    Let('\item',    '\lx@algorithmic@item');
+    Let('\hfill',   '\lx@algorithmic@hfill');
+});
+
+DefConstructor('\lx@algorithmic@beginlist{}{}', "<ltx:listing>",
+  beforeConstruct => sub { $_[0]->maybeCloseElement('ltx:p'); },
+  afterDigest     => sub { Let('\list', '\lx@algorithmic@beginlist@inner'); });    # NOT nested list!
+
+DefConstructor('\lx@algorithmic@endlist', "</ltx:listing>",
+  beforeConstruct => sub { $_[0]->maybeCloseElement('ltx:listingline'); });
+
+DefConstructor('\lx@algorithmic@beginlist@inner{}{}', "",
+  afterDigest => sub { Let('\endlist', '\relax'); });                              # NOT nested list!
+
+DefMacro('\lx@algorithmic@item OptionalUndigested',
+  '\lx@algorithmic@item@@ [#1]\hskip\ALC@tlm\relax');
+
+# This imitates \item; just opens the ltx:listingline, but somebody's got to close it.
+DefConstructor('\lx@algorithmic@item@@ OptionalUndigested',
+  "<ltx:listingline xml:id='#id' itemsep='#itemsep'>"
+    . "#tags",
+  properties => sub {
+    my $id   = Digest(T_CS('\theALC@line@ID'));
+    my $tags = Digest(Invocation(T_CS('\lx@make@tags'), T_OTHER('ALC@line')));
+    (id => $id, tags => $tags); },
+  beforeConstruct => sub { $_[0]->maybeCloseElement('ltx:listingline'); });
+
+NewCounter('algorithm', undef,       idprefix => 'alg');
+NewCounter('ALC@line',  'algorithm', idprefix => 'l');     # Assuming we're inside an {algorithm}!
+DefMacro('\fnum@ALC@line', '\ALC@lno');
+
+# Hopefully this will only get used for right justifying a comment;
+# the ltx:text should autoclose at end of line?
+DefConstructor('\lx@algorithmic@hfill',
+  "<ltx:text cssstyle='float:right'>");
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+1;
