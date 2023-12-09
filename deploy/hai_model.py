@@ -204,7 +204,7 @@ Alternatively, it can be provided by passing in the `api_key` parameter when cal
             data = response.json()
             data = data['message']
         else: 
-            data = response.text
+            data = response.content.decode('utf-8', errors='ignore')
             data = data.replace('[DONE]', "")
         data = PostProcessFunctions.post_process(model=model, data=data)
         return data

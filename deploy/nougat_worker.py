@@ -10,8 +10,9 @@ sys.path.append(f'{here.parent.parent}')
 from HaiNougat.apis import partial
 from HaiNougat.apis import move_to_device,rasterize_paper,get_checkpoint,ImageDataset
 from nougat_model import NougatModel
-from HaiNougat.apis import markdown_compatible, close_envs
 from nougat_inference import inference_no_stream, inference_stream
+
+
 class WorkerModel(BaseWorkerModel):
     def __init__(self, name, **kwargs):
         self.name = name 
@@ -54,9 +55,11 @@ class WorkerModel(BaseWorkerModel):
         raise RuntimeError("目前没有可用的gpu")
 
     def inference(self, **kwargs):
+
         pdfbin = kwargs.pop('pdfbin')
         start = kwargs.pop('start', None)
         stop = kwargs.pop('stop', None)
+        stream = kwargs.get('stream', False)
         pdfbin = base64.b64decode(pdfbin)
         pdf = pypdfium2.PdfDocument(pdfbin)
         if start is not None and stop is not None:
@@ -64,6 +67,7 @@ class WorkerModel(BaseWorkerModel):
         else:
             pages = list(range(len(pdf)))        
         compute_pages = pages.copy()
+        
         images = rasterize_paper(pdf, pages=compute_pages)
         dataset = ImageDataset(
             images,
@@ -75,40 +79,11 @@ class WorkerModel(BaseWorkerModel):
             pin_memory=True,
             shuffle=False
         )
-        """
         if stream:
-            return inference_stream(dataloader=dataloader,  model=self.noutgat_model, pages=pages, compute_pages=compute_pages, batch=self.batchsize)
+            return inference_stream(dataloader=dataloader, nougat_model=self.nougat_model, pages=pages, compute_pages=compute_pages, batch=self.batchsize)
         else:
-            return inference_no_stream(dataloader=dataloader,  model=self.noutgat_model, pages=pages, compute_pages=compute_pages, batch=self.batchsize)
-        """
-        predictions = [""] * len(pages)
-        for idx, sample in tqdm(enumerate(dataloader), total=len(dataloader)):
-            if sample is None:
-                continue
-            model_output = self.nougat_model.inference(image_tensors=sample)
+            return inference_no_stream(dataloader=dataloader, nougat_model=self.nougat_model, pages=pages, compute_pages=compute_pages, batch=self.batchsize)
 
-            for j, output in enumerate(model_output["predictions"]):
-                if model_output["repeats"][j] is not None:
-                    if model_output["repeats"][j] > 0:
-                        disclaimer = "\n\n+++ ==WARNING: Truncated because of repetitions==\n%s\n+++\n\n"
-                    else:
-                        disclaimer = (
-                            "\n\n+++ ==ERROR: No output for this page==\n%s\n+++\n\n"
-                        )
-                    rest = close_envs(model_output["repetitions"][j]).strip()
-                    if len(rest) > 0:
-                        disclaimer = disclaimer % rest
-                    else:
-                        disclaimer = ""
-                else:
-                    disclaimer = ""
-                
-                predictions[pages.index(compute_pages[idx * self.batchsize + j])] = (
-                    markdown_compatible(output) + disclaimer
-                )
-            
-            yield "".join(predictions).strip()
-            predictions = [""] * len(pages)
     
 
 def run_worker(**kwargs):

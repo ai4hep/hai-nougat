@@ -5,12 +5,12 @@ sys.path.append(f'{here.parent.parent}')
 from HaiNougat.apis import markdown_compatible, close_envs
 from tqdm import tqdm
 
-def inference_stream(dataloader, model, pages, compute_pages, batch):            
+def inference_stream(dataloader, nougat_model, pages, compute_pages, batch):            
     predictions = [""] * len(pages)
     for idx, sample in tqdm(enumerate(dataloader), total=len(dataloader)):
         if sample is None:
             continue
-        model_output = model.inference(image_tensors=sample)
+        model_output = nougat_model.inference(image_tensors=sample)
         
         for j, output in enumerate(model_output["predictions"]):
             if model_output["repeats"][j] is not None:
@@ -35,12 +35,12 @@ def inference_stream(dataloader, model, pages, compute_pages, batch):
         yield "".join(predictions).strip()
         predictions = [""] * len(pages)
 
-def inference_no_stream(dataloader, model, pages, compute_pages, batch):            
+def inference_no_stream(dataloader, nougat_model, pages, compute_pages, batch):            
     predictions = [""] * len(pages)
     for idx, sample in tqdm(enumerate(dataloader), total=len(dataloader)):
         if sample is None:
             continue
-        model_output = model.inference(image_tensors=sample)
+        model_output = nougat_model.inference(image_tensors=sample)
         
         for j, output in enumerate(model_output["predictions"]):
             if model_output["repeats"][j] is not None:

@@ -1,4 +1,4 @@
-python nougat_worker.py \
+nohup python nougat_worker.py \
  --name meta/nougat \
  --host 0.0.0.0 \
  --controller_address http://aiapi.ihep.ac.cn:42901 \
