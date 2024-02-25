@@ -13,6 +13,5 @@ from nougat import NougatModel
 from ..repos.nougat.nougat.postprocessing import markdown_compatible, close_envs
 from ..repos.nougat.nougat.utils.dataset import ImageDataset
 from ..repos.nougat.nougat.utils.checkpoint import get_checkpoint
-from ..repos.nougat.nougat.dataset.rasterize import rasterize_paper
 from ..repos.nougat.nougat.utils.device import move_to_device, default_batch_size
 

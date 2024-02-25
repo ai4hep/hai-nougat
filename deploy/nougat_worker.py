@@ -8,10 +8,10 @@ from tqdm import tqdm
 here = Path(__file__).parent.absolute()
 sys.path.append(f'{here.parent.parent}')
 from HaiNougat.apis import partial
-from HaiNougat.apis import move_to_device,rasterize_paper,get_checkpoint,ImageDataset
+from HaiNougat.apis import move_to_device, get_checkpoint,ImageDataset
 from nougat_model import NougatModel
 from nougat_inference import inference_no_stream, inference_stream
-
+from utils import rasterize_paper
 
 class WorkerModel(BaseWorkerModel):
     def __init__(self, name, **kwargs):
@@ -23,7 +23,7 @@ class WorkerModel(BaseWorkerModel):
     def determine_batchsize(self):
         if torch.cuda.is_available():
             batchszie = int(
-                torch.cuda.get_device_properties(0).total_memory / 1024 / 1024 / 1000 * 0.4
+                torch.cuda.get_device_properties(0).total_memory / 1024 / 1024 / 1000 * 0.35
             )
             if batchszie == 0:
                 logging.warning("GPU VRAM is too small. Computing on CPU.")
@@ -35,10 +35,11 @@ class WorkerModel(BaseWorkerModel):
         return batchszie
     
     def initialize_model(self):
-        model = NougatModel.from_pretrained(get_checkpoint())
+        model = NougatModel.from_pretrained(get_checkpoint(checkpoint_path="/home/luojw/VSProjects/hai-nougat/checkpoint"))
         model = move_to_device(model, cuda=self.batchsize > 0)
         idx = self.choose_cuda()
-        model.to(f"cuda:{idx}")
+        model.to("cuda:4")
+        # model.to(f"cuda:{idx}")
         if self.batchsize <= 0:
             self.batchsize = 1
         model.eval()
@@ -49,13 +50,12 @@ class WorkerModel(BaseWorkerModel):
         # 遍历每个GPU
         for i in range(num_gpus):
             # 检查GPU是否空闲
-            if torch.cuda.memory_allocated(i)  < 50 * 1024 * 1024:
+            if torch.cuda.memory_allocated(i)  < 5 * 1024**3:
                 return i
         
         raise RuntimeError("目前没有可用的gpu")
 
     def inference(self, **kwargs):
-
         pdfbin = kwargs.pop('pdfbin')
         start = kwargs.pop('start', None)
         stop = kwargs.pop('stop', None)
