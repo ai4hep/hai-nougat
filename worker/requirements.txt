@@ -1,0 +1,6 @@
+nougat-ocr==0.1.8
+hepai==1.0.18
+pypdfium2==4.22.0
+requests==2.31.0
+damei==1.1.135
+tqdm==4.64.1

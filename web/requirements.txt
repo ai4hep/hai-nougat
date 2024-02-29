@@ -1,0 +1,6 @@
+damei==1.1.135
+hepai==1.0.18
+PyPDF2==3.0.1
+fastapi==0.101.0
+Werkzeug==3.0.1
+starlette==0.27.0
