@@ -4,3 +4,6 @@ pypdfium2==4.22.0
 requests==2.31.0
 damei==1.1.135
 tqdm==4.64.1
+pypdf==4.1.0
+opencv-python==4.9.0.80
+transformers==4.38.2

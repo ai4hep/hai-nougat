@@ -1,8 +1,8 @@
 import sys,torch
 from pathlib import Path
 here = Path(__file__).parent.absolute()
-sys.path.append(f'{here.parent.parent}')
-from worker.apis import markdown_compatible, close_envs
+sys.path.append(f'{here.parent}')
+from apis import markdown_compatible, close_envs
 from tqdm import tqdm
 
 def inference_stream(dataloader, nougat_model, pages, compute_pages, batch):            

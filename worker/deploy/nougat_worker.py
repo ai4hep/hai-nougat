@@ -5,9 +5,9 @@ import sys, logging,base64,torch
 from pathlib import Path
 import pypdfium2
 here = Path(__file__).parent.absolute()
-sys.path.append(f'{here.parent.parent}')
-from worker.apis import partial
-from worker.apis import move_to_device, get_checkpoint,ImageDataset
+sys.path.append(f'{here.parent}')
+from apis import partial
+from apis import move_to_device, get_checkpoint,ImageDataset
 from nougat_model import NougatModel
 from nougat_inference import inference_no_stream, inference_stream
 from utils import rasterize_paper
@@ -15,14 +15,15 @@ from utils import rasterize_paper
 class WorkerModel(BaseWorkerModel):
     def __init__(self, name, **kwargs):
         self.name = name 
+        self.checkpoint = str(here.parent / 'checkpoint')
         self.batchsize = self.determine_batchsize()
         self.nougat_model = self.initialize_model()
-
+        
 
     def determine_batchsize(self):
         if torch.cuda.is_available():
             batchszie = int(
-                torch.cuda.get_device_properties(0).total_memory / 1024 / 1024 / 1000 * 0.35
+                torch.cuda.get_device_properties(0).total_memory / 1024 / 1024 / 1000 * 0.3
             )
             if batchszie == 0:
                 logging.warning("GPU VRAM is too small. Computing on CPU.")
@@ -34,26 +35,13 @@ class WorkerModel(BaseWorkerModel):
         return batchszie
     
     def initialize_model(self):
-        model = NougatModel.from_pretrained(get_checkpoint(checkpoint_path="/home/luojw/VSProjects/hai-nougat/checkpoint"))
+        model = NougatModel.from_pretrained(get_checkpoint(checkpoint_path=self.checkpoint))
         model = move_to_device(model, cuda=self.batchsize > 0)
-        idx = self.choose_cuda()
-        model.to("cuda:4")
-        # model.to(f"cuda:{idx}")
         if self.batchsize <= 0:
             self.batchsize = 1
         model.eval()
         return model
-    
-    def choose_cuda(self):
-        num_gpus = torch.cuda.device_count()
-        # 遍历每个GPU
-        for i in range(num_gpus):
-            # 检查GPU是否空闲
-            if torch.cuda.memory_allocated(i)  < 5 * 1024**3:
-                return i
         
-        raise RuntimeError("目前没有可用的gpu")
-
     def inference(self, **kwargs):
         pdfbin = kwargs.pop('pdfbin')
         start = kwargs.pop('start', None)
@@ -86,14 +74,13 @@ class WorkerModel(BaseWorkerModel):
     
 
 def run_worker(**kwargs):
-    # worker_args = hai.parse_args_into_dataclasses(WorkerArgs)  # 解析参数
     model_args, worker_args = hai.parse_args_into_dataclasses((ModelArgs, WorkerArgs))  # 解析多个参数类
-    # print(worker_args)
+
     model = WorkerModel(  # 获取模型
         name=model_args.name
         )
     if worker_args.test:
-        pdf_path = "/home/luojw/VSProjects/hai-nougat/nougat.pdf"
+        pdf_path = ""
         pdf_path = os.path.abspath(pdf_path)
         if not os.path.exists(pdf_path):
             raise ValueError("PDF路径为空.请使用pdlf_path参数来提供有效的PDF路径。")
