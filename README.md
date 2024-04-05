@@ -1,6 +1,7 @@
-# HaiNougat: A More Accurate Document Parser for High-Energy Physics
+# HaiNougat
 
-HaiNougat is the official repository for an academic document PDF parser specialized in converting high-energy physics documents into Mathpix Markdown format.
+
+This project is the official implemention of HaiNougat: A More Accurate Document Parser for High-Energy Physics, which if an academic document PDF parser specialized in converting high-energy physics documents into Mathpix Markdown format.
 
 ## Data-Clean Tool
 
@@ -128,8 +129,25 @@ Finally, run `./run_worker.sh`
 
 To deploy the worker to a different address, you can replace the `http://aiapi.ihep.ac.cn:42901`  in the `run_worker.sh` with the desired address and port in the command. 
 
-## Thanks
+## Citation
+
+```
+@misc{Luo2024hainougat,
+      title={HaiNougat: A More Accurate Document Parser for High-Energy Physics}, 
+      author={Jianwen Luo, xx},
+      year={2024}
+}
+```
+
+## Acknowledgements
 
 The creation of this work owes a great deal to the incredible open source models and datasets that have been utilized, among which include (but are not limited to):
 
 * Nougat from Meta
+
+
+## License
+
+HaiNougat is licensed under CC-BY-NC.
+
+If used for commercial purposes, please contact `zdzhang@ihep.ac.cn`.

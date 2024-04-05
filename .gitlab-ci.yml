@@ -1,0 +1,18 @@
+stages:
+  - deploy
+
+push_to_github:
+  stage: deploy
+  tags:
+    - gitlab-to-github
+  script:
+    - whoami
+    - cd /tmp
+    - git clone --bare https://code.ihep.ac.cn/hepai/hai-nougat.git
+    - cd hai-nougat.git
+    - git push --mirror git@github.com:ai4hep/hai-nougat.git
+    - cd ..
+    - rm -rf hai-nougat.git
+  only:
+    - main
+    
