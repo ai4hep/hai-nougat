@@ -44,7 +44,7 @@ class PreProcessFunctions:
         """
         if model == "meta/segment_anything_model":
             data = sam_pre_process(data)
-        elif model == "meta/nougat":
+        elif model in ["meta/nougat", "hepai/hainougat"]:
             data = pdf_pre_process(data)
         return data
 

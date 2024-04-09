@@ -20,7 +20,7 @@ async def process_file(uploaded_file_path, api_key):
     loop = asyncio.get_running_loop()
     inference_func = partial(
         hai_model.HaiModel.inference,
-        model='meta/nougat',
+        model='hepai/hainougat',
         timeout=3000,
         stream=False,
         pdf_path=uploaded_file_path,
