@@ -1,7 +1,12 @@
-# HaiNougat
+[![Stars](https://img.shields.io/github/stars/ai4hep/hai-nougat)](
+https://github.com/zhangzhengde0225/Xiwu)
+
+# <img width="8%" src='/web/build/static/media/logo.86df30241577a42b7e0f.png' alt="logo"> HaiNougat
 
 
-This project is the official implemention of HaiNougat: A More Accurate Document Parser for High-Energy Physics, which if an academic document PDF parser specialized in converting high-energy physics documents into Mathpix Markdown format.
+This project is the official implemention of **HaiNougat: A More Accurate Document Parser for High-Energy Physics**, which if an academic document PDF parser specialized in converting high-energy physics documents into Mathpix Markdown format.
+
+You can access the HaiNougat WebUI [here](https://ai.ihep.ac.cn/m/hai-nougat).
 
 ## Data-Clean Tool
 
@@ -15,7 +20,7 @@ Next run `pip install -r requirements`
 
 Then, Download [TeX Live 2023](https://tug.org/texlive/), [LaTeXML](https://github.com/brucemiller/LaTeXML), [pdffigures2](https://github.com/allenai/pdffigures2), and set them as environment variables.
 
-### Use
+### Usage
 
 First `cd data-clean-tool`
 
@@ -88,7 +93,7 @@ root/
 └── validation.seek.map
 ```
 
-## HaiNougat website
+## WebUI
 
 ### Install
 
@@ -97,13 +102,13 @@ cd web
 pip install -r requirements.txt
 ```
 
-### Use
+### Usage
 
 First, you need to add your API key to the environment variable `HEPAI_API_KEY`
 
 Then, run `python app.py`. This webpage will start on the port `7860`.
 
-You can also visit the [https://chat.ihep.ac.cn:5557](https://chat.ihep.ac.cn:5557) to experience the HaiNougat model.
+You can also visit the [WebUI](https://ai.ihep.ac.cn/m/hai-nougat) to experience the HaiNougat model.
 
 ## Worker
 
@@ -117,7 +122,7 @@ cd worker
 pip install -r requirments.txt
 ```
 
-## Use
+## Usage
 
 First, `cd deploy`
 
@@ -134,8 +139,9 @@ To deploy the worker to a different address, you can replace the `http://aiapi.i
 ```
 @misc{Luo2024hainougat,
       title={HaiNougat: A More Accurate Document Parser for High-Energy Physics}, 
-      author={Jianwen Luo, xx},
+      author={Jianwen Luo, Zhengde Zhang*, Fazhi Qi, Yiyu Zhang},
       year={2024}
+      url={https://github.con/ai4hep/hai-nougat}
 }
 ```
 
