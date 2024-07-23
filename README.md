@@ -122,6 +122,9 @@ cd worker
 pip install -r requirments.txt
 ```
 
+## Checkpoint
+You can download the checkpoint of hainougat from [here](https://drive.google.com/file/d/1mYQ-fiUAZU9xnJA5Tk47cEsO4KOaQT5u/view?usp=sharing). After downloading, set the path of the checkpoint folder as the `NOUGAT_CHECKPOINT` environment variable. 
+
 ## Usage
 
 First, `cd deploy`
