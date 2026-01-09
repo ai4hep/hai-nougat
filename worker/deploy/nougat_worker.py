@@ -115,7 +115,7 @@ class WorkerArgs:
     stream_interval: float = 0.  # 额外的流式响应间隔
     no_register: bool = False  # 不注册到控制器
     permissions: str = 'groups: all'  # 模型的权限授予，分为用户和组，用;分隔，例如：需要授权给所有组、a用户、b用户：'groups: all; users: a, b; owner: c'
-    description: str = 'This is a demo worker in HeiAI-Distributed Deploy Framework'  # 模型的描述
+    description: str = 'This is a demo worker in HepAI-Distributed Deploy Framework'  # 模型的描述
     author: str = 'meta'  # 模型的作者
     test: bool = False  # 测试模式，不会真正启动worker，只会打印参数
 

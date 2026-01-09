@@ -1,4 +1,6 @@
 
+worker/checkpoint
+worker/checkpoint.zip
 web/nohup*
 
 # Byte-compiled / optimized / DLL files
