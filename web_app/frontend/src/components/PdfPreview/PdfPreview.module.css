@@ -1,0 +1,41 @@
+.pdfPreview {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 400px;
+}
+
+.pdfControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid #f0f0f0;
+  background: var(--bg-light);
+}
+
+.pdfContainer {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--spacing-md);
+  background: #f5f5f5;
+}
+
+.document {
+  display: flex;
+  justify-content: center;
+}
+
+.page {
+  box-shadow: var(--shadow-md);
+}

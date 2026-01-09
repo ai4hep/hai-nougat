@@ -1,0 +1,7 @@
+last_modified: 1767941390.1929493
+models:
+  hepai/hainougat:
+    enabled: true
+    last_updated: 1767941390.1929588
+    provider: hepai
+version: '1.0'

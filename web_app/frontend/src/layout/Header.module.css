@@ -1,0 +1,17 @@
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+}
+
+.title {
+  color: white !important;
+  margin: 0 !important;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 14px;
+}
