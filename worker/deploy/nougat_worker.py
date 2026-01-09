@@ -101,7 +101,7 @@ def run_worker(**kwargs):
 
 @dataclass
 class ModelArgs:
-    name: str = "meta/nougat"  # worker的名称，用于注册到控制器
+    name: str = "hepai/hainougat"  # worker的名称，用于注册到控制器
 
 
 # (2) worker的参数配置和启动代码
@@ -109,14 +109,14 @@ class ModelArgs:
 class WorkerArgs:
     host: str = "0.0.0.0"  # worker的地址，0.0.0.0表示外部可访问，127.0.0.1表示只有本机可访问
     port: str = "auto"  # worker的端口，默认从42902开始自动分配
-    controller_address: str = "http://aiapi.ihep.ac.cn:42901"  # 控制器的地址
+    controller_address: str = "https://aiapi.ihep.ac.cn"  # 控制器的地址
     worker_address: str = "auto"  # 默认是http://<ip>:<port>
     limit_model_concurrency: int = 5  # 限制模型的并发请求
     stream_interval: float = 0.  # 额外的流式响应间隔
     no_register: bool = False  # 不注册到控制器
-    permissions: str = 'groups: all'  # 模型的权限授予，分为用户和组，用;分隔，例如：需要授权给所有组、a用户、b用户：'groups: all; users: a, b; owner: c'
+    permissions: str = 'groups: payg ; owner: tangzh@ihep.ac.cn'  # 模型的权限授予，分为用户和组，用;分隔，例如：需要授权给所有组、a用户、b用户：'groups: all; users: a, b; owner: c'
     description: str = 'This is a demo worker in HepAI-Distributed Deploy Framework'  # 模型的描述
-    author: str = 'meta'  # 模型的作者
+    author: str = 'admin'  # 模型的作者
     test: bool = False  # 测试模式，不会真正启动worker，只会打印参数
 
 if __name__ == '__main__':

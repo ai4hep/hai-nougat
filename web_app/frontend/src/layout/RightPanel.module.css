@@ -1,0 +1,19 @@
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid #f0f0f0;
+  background: var(--bg-light);
+}
+
+.panelTitle {
+  margin: 0 !important;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.panelContent {
+  flex: 1;
+  overflow: auto;
+}
